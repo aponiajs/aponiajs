@@ -1,4 +1,6 @@
 import { AponiaError, Injectable } from "@aponiajs/common";
+import { BulkheadLimiter } from "./resilience/bulkhead.ts";
+import { OriginCircuitBreaker } from "./resilience/circuit-breaker.ts";
 import { resolvePublicHttpUrl, safeUrl } from "./security/ssrf.ts";
 import type {
   HttpClientInterceptor,
@@ -28,10 +30,18 @@ interface PinnedRequestInit extends RequestInit {
 export class HttpService {
   readonly #options: ResolvedHttpOptions;
   readonly #interceptors: readonly HttpClientInterceptor[];
+  readonly #circuitBreaker: OriginCircuitBreaker | undefined;
+  readonly #bulkhead: BulkheadLimiter | undefined;
 
   constructor(options: ResolvedHttpOptions, interceptors: readonly HttpClientInterceptor[] = []) {
     this.#options = options;
     this.#interceptors = Object.freeze([...interceptors]);
+    this.#circuitBreaker =
+      options.circuitBreaker !== undefined
+        ? new OriginCircuitBreaker(options.circuitBreaker)
+        : undefined;
+    this.#bulkhead =
+      options.bulkhead !== undefined ? new BulkheadLimiter(options.bulkhead) : undefined;
   }
 
   /** Sends one request and returns its parsed answer. */
@@ -65,19 +75,24 @@ export class HttpService {
   }
 
   async #dispatch<T>(url: string, options: HttpRequestOptions): Promise<HttpResponse<T>> {
-    const interceptors = this.#interceptors;
-    let index = -1;
+    const release = this.#bulkhead !== undefined ? await this.#bulkhead.acquire() : undefined;
+    try {
+      const interceptors = this.#interceptors;
+      let index = -1;
 
-    const run = async (request: HttpClientRequest): Promise<HttpResponse<unknown>> => {
-      index += 1;
-      if (index < interceptors.length) {
-        const next: HttpHandler = (nextRequest) => run(nextRequest);
-        return await interceptors[index]!.intercept(request, next);
-      }
-      return await this.#request(request.url, request.options);
-    };
+      const run = async (request: HttpClientRequest): Promise<HttpResponse<unknown>> => {
+        index += 1;
+        if (index < interceptors.length) {
+          const next: HttpHandler = (nextRequest) => run(nextRequest);
+          return await interceptors[index]!.intercept(request, next);
+        }
+        return await this.#request(request.url, request.options);
+      };
 
-    return (await run({ url, options })) as HttpResponse<T>;
+      return (await run({ url, options })) as HttpResponse<T>;
+    } finally {
+      release?.();
+    }
   }
 
   async #request<T>(url: string, options: HttpRequestOptions): Promise<HttpResponse<T>> {
@@ -161,14 +176,16 @@ export class HttpService {
         init.proxy = false;
       }
 
-      const response = await this.#fetchWithRetry(
-        requestUrl,
-        current,
-        init,
-        method,
-        retries,
-        timeoutMs,
-        options.idempotencyKey !== undefined,
+      const response = await this.#executeWithCircuitBreaker(current.origin, () =>
+        this.#fetchWithRetry(
+          requestUrl,
+          current,
+          init,
+          method,
+          retries,
+          timeoutMs,
+          options.idempotencyKey !== undefined,
+        ),
       );
 
       if (redirect === "manual" || !redirectStatuses.has(response.status)) {
@@ -233,6 +250,26 @@ export class HttpService {
       await response.body?.cancel().catch(() => {});
       current = nextUrl;
       redirects += 1;
+    }
+  }
+
+  async #executeWithCircuitBreaker(origin: string, fn: () => Promise<Response>): Promise<Response> {
+    const breaker = this.#circuitBreaker;
+    if (breaker === undefined) {
+      return await fn();
+    }
+    breaker.acquire(origin);
+    try {
+      const response = await fn();
+      if (breaker.isFailureStatus(response.status)) {
+        breaker.recordFailure(origin);
+      } else {
+        breaker.recordSuccess(origin);
+      }
+      return response;
+    } catch (error) {
+      breaker.recordFailure(origin);
+      throw error;
     }
   }
 

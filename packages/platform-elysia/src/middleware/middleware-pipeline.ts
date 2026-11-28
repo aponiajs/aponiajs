@@ -1,5 +1,9 @@
-import { stripRoutePrefix, type ResolvedMiddlewareConfig } from "@aponiajs/common";
-import { resolveMiddlewareInstance, runMiddlewareChain } from "@aponiajs/core";
+import { slicePathname, stripRoutePrefix, type ResolvedMiddlewareConfig } from "@aponiajs/common";
+import {
+  compileMiddlewareConfigs,
+  resolveMiddlewareInstance,
+  runCompiledMiddlewareChain,
+} from "@aponiajs/core";
 import type { AponiaContainer } from "@aponiajs/core";
 import type { Elysia } from "elysia";
 
@@ -11,11 +15,13 @@ import type { Elysia } from "elysia";
  */
 export const resolveMiddleware = resolveMiddlewareInstance;
 
+const NOOP_NEXT = (): Promise<unknown> => Promise.resolve(undefined);
+
 /**
  * Mounts middleware configurations onto an Elysia application instance.
  *
  * Elysia's own router decides which route answers; the chain that runs before it
- * is `@aponiajs/platform-core`'s, so one middleware behaves the same on every
+ * is `@aponiajs/core`'s, so one middleware behaves the same on every
  * platform.
  *
  * @param application - The native Elysia application.
@@ -33,35 +39,48 @@ export function mountMiddleware(
     return;
   }
 
-  const pipeline = Object.freeze(
-    configs.map((config) =>
-      Object.freeze({
-        middleware: Object.freeze(
-          config.middleware.map((entry) => resolveMiddleware(entry, container)),
-        ),
-        targets: config.targets,
-        excluded: config.excluded,
-      }),
-    ),
+  const compiled = compileMiddlewareConfigs(
+    configs.map((config) => ({
+      middleware: config.middleware.map((entry) => resolveMiddleware(entry, container)),
+      targets: config.targets,
+      excluded: config.excluded,
+    })),
   );
 
   application.onRequest(
-    async (elysiaContext: { request: Request; path?: string }): Promise<Response | undefined> => {
-      const url = new URL(elysiaContext.request.url);
-      const pathname = stripRoutePrefix(elysiaContext.path ?? url.pathname, prefix);
+    (elysiaContext: {
+      request: Request;
+      path?: string;
+    }): Response | undefined | Promise<Response | undefined> => {
+      const pathname = stripRoutePrefix(
+        elysiaContext.path ?? slicePathname(elysiaContext.request.url),
+        prefix,
+      );
       if (pathname === undefined) {
         return undefined;
       }
 
-      const result = await runMiddlewareChain(
-        pipeline,
+      const result = runCompiledMiddlewareChain(
+        compiled,
         elysiaContext,
         pathname,
         elysiaContext.request.method,
-        async () => undefined,
+        NOOP_NEXT,
       );
 
-      return result instanceof Response ? result : undefined;
+      if (result instanceof Response) {
+        return result;
+      }
+      if (
+        result !== null &&
+        typeof result === "object" &&
+        typeof (result as Promise<unknown>).then === "function"
+      ) {
+        return (result as Promise<unknown>).then((resolved) =>
+          resolved instanceof Response ? resolved : undefined,
+        );
+      }
+      return undefined;
     },
   );
 }

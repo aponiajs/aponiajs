@@ -1,8 +1,8 @@
 # Packages
 
-AponiaJS ships 35 publishable packages from this repository and 1 private facade
+AponiaJS ships 39 publishable packages from this repository and 1 private facade
 (`aponiajs`), which is not published. **Six are on npm today**; the other
-29 belong to the unreleased `1.0.0-beta.N` line and cannot be installed until that line is published.
+33 belong to the unreleased `1.0.0-beta.N` line and cannot be installed until that line is published.
 The registry serves the older `0.6.0-alpha.N` line for the six.
 
 ## On npm today
@@ -28,37 +28,41 @@ name `@alpha` explicitly. The other five serve a stable `0.5.0` under `latest`.
 These packages exist in this repository and ship with `1.0.0-beta.N`. An install
 command naming one of them answers `404` until that line is published.
 
-| Package                   | What it adds                                                   |
-| ------------------------- | -------------------------------------------------------------- |
-| `@aponiajs/auth`          | JWT, OIDC, refresh rotation, revocation, and RBAC              |
-| `@aponiajs/cache`         | Bounded TTL cache with a pluggable store                       |
-| `@aponiajs/compiler`      | Scoped lifetimes, borrow views, and typestate                  |
-| `@aponiajs/compression`   | Brotli and gzip response compression                           |
-| `@aponiajs/cors`          | Cross-origin policy from validated configuration               |
-| `@aponiajs/database`      | Drizzle boundary, repositories, and SQL migrations             |
-| `@aponiajs/events`        | Typed in-process events with ordered handlers                  |
-| `@aponiajs/graphql`       | GraphQL endpoint adapter                                       |
-| `@aponiajs/http`          | SSRF-safe outbound HTTP client                                 |
-| `@aponiajs/mcp`           | Model Context Protocol endpoint adapter                        |
-| `@aponiajs/microservices` | Message patterns and nine broker transports                    |
-| `@aponiajs/nitro`         | Nitro delivery adapter                                         |
-| `@aponiajs/openapi`       | OpenAPI document for an application's routes                   |
-| `@aponiajs/platform-h3`   | AponiaJS on the H3 runtime                                     |
-| `@aponiajs/platform-hono` | AponiaJS on the Hono runtime                                   |
-| `@aponiajs/queue`         | In-process jobs, retries, dead letters, and outbox             |
-| `@aponiajs/rate-limit`    | Fixed-window rate limiting guard and store                     |
-| `@aponiajs/security`      | Security headers and signed CSRF                               |
-| `@aponiajs/schematics`    | Nest-shaped schematic collection for the CLI                   |
-| `@aponiajs/serverless`    | Web Fetch and AWS Lambda adapters                              |
-| `@aponiajs/session`       | Signed session cookies and store                               |
-| `@aponiajs/testing`       | Test application builder and provider overrides                |
-| `@aponiajs/view`          | Blade views, components, slots, and shared data                |
-| `@aponiajs/cron`          | Scheduled jobs from validated configuration                    |
-| `@aponiajs/config`        | Nest-style `.env`, namespaces, and validated config            |
-| `@aponiajs/cqrs`          | `CommandBus`, `QueryBus`, `EventBus`, `@Saga`, `AggregateRoot` |
-| `@aponiajs/mapped-types`  | `PartialType`, `PickType`, `OmitType`, `IntersectionType`      |
-| `@aponiajs/serve-static`  | Static file and SPA serving via `ServeStaticModule`            |
-| `@aponiajs/terminus`      | `TerminusModule`, `HealthCheckService`, health indicators      |
+| Package                   | What it adds                                                       |
+| ------------------------- | ------------------------------------------------------------------ |
+| `@aponiajs/auth`          | JWT, OIDC, refresh rotation, revocation, and RBAC                  |
+| `@aponiajs/cache`         | Bounded TTL cache with a pluggable store                           |
+| `@aponiajs/compiler`      | Scoped lifetimes, borrow views, and typestate                      |
+| `@aponiajs/compression`   | Brotli and gzip response compression                               |
+| `@aponiajs/cors`          | Cross-origin policy from validated configuration                   |
+| `@aponiajs/database`      | Drizzle boundary, repositories, and SQL migrations                 |
+| `@aponiajs/events`        | Typed in-process events with ordered handlers                      |
+| `@aponiajs/graphql`       | GraphQL endpoint adapter                                           |
+| `@aponiajs/http`          | SSRF-safe outbound HTTP client                                     |
+| `@aponiajs/mcp`           | Model Context Protocol endpoint adapter                            |
+| `@aponiajs/microservices` | Message patterns and nine broker transports                        |
+| `@aponiajs/nitro`         | Nitro delivery adapter                                             |
+| `@aponiajs/openapi`       | OpenAPI document for an application's routes                       |
+| `@aponiajs/platform-h3`   | AponiaJS on the H3 runtime                                         |
+| `@aponiajs/platform-hono` | AponiaJS on the Hono runtime                                       |
+| `@aponiajs/queue`         | In-process jobs, retries, dead letters, and outbox                 |
+| `@aponiajs/rate-limit`    | Fixed-window rate limiting guard and store                         |
+| `@aponiajs/security`      | Security headers and signed CSRF                                   |
+| `@aponiajs/schematics`    | Nest-shaped schematic collection for the CLI                       |
+| `@aponiajs/serverless`    | Web Fetch and AWS Lambda adapters                                  |
+| `@aponiajs/session`       | Signed session cookies and store                                   |
+| `@aponiajs/testing`       | Test application builder and provider overrides                    |
+| `@aponiajs/view`          | Blade views, components, slots, and shared data                    |
+| `@aponiajs/cron`          | Scheduled jobs from validated configuration                        |
+| `@aponiajs/config`        | Nest-style `.env`, namespaces, and validated config                |
+| `@aponiajs/cqrs`          | `CommandBus`, `QueryBus`, `EventBus`, `@Saga`, `AggregateRoot`     |
+| `@aponiajs/mapped-types`  | `PartialType`, `PickType`, `OmitType`, `IntersectionType`          |
+| `@aponiajs/serve-static`  | Static file and SPA serving via `ServeStaticModule`                |
+| `@aponiajs/terminus`      | `TerminusModule`, `HealthCheckService`, health indicators          |
+| `@aponiajs/metrics`       | Zero-dep Prometheus metrics, HTTP histograms, runtime gauges       |
+| `@aponiajs/opentelemetry` | OpenTelemetry tracing, W3C `traceparent`, and server spans         |
+| `@aponiajs/idempotency`   | `Idempotency-Key` deduplication, conflict guard, and replay        |
+| `@aponiajs/redis`         | Redis client and distributed stores for cache/auth/rate-limit/cron |
 
 The reserved `aponiajs` facade is private in this workspace and is not
 published. Do not install it yet.

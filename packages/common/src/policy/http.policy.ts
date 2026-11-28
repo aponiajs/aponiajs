@@ -282,6 +282,37 @@ function checkPolicy(policy: HttpPolicy): HttpPolicy {
  * @param policies - The resolved policies.
  * @returns The preflight response, or `undefined`.
  */
+interface CompiledCorsCache {
+  readonly methodsHeader: string;
+  readonly allowedHeadersHeader: string | undefined;
+  readonly exposedHeadersHeader: string | undefined;
+  readonly maxAgeHeader: string | undefined;
+  readonly originSet: ReadonlySet<string> | undefined;
+}
+
+const corsCache = new WeakMap<ResolvedCors, CompiledCorsCache>();
+
+function getCorsCache(cors: ResolvedCors): CompiledCorsCache {
+  let cached = corsCache.get(cors);
+  if (cached !== undefined) {
+    return cached;
+  }
+  cached = {
+    methodsHeader: cors.methods.join(", "),
+    allowedHeadersHeader:
+      cors.allowedHeaders === undefined ? undefined : cors.allowedHeaders.join(", "),
+    exposedHeadersHeader:
+      cors.exposedHeaders.length > 0 ? cors.exposedHeaders.join(", ") : undefined,
+    maxAgeHeader: cors.maxAge === undefined ? undefined : String(cors.maxAge),
+    originSet: Array.isArray(cors.origin) ? new Set(cors.origin) : undefined,
+  };
+  corsCache.set(cors, cached);
+  return cached;
+}
+
+/**
+ * Evaluates a CORS preflight (`OPTIONS`) request against resolved policies.
+ */
 export function corsPreflight(
   request: Request,
   policies: ResolvedHttpPolicies,
@@ -299,19 +330,21 @@ export function corsPreflight(
   const allowed = allowedOrigin(origin, cors);
   const headers = new Headers({ vary: "Origin" });
   if (allowed !== undefined) {
+    const cached = getCorsCache(cors);
     headers.set("access-control-allow-origin", allowed);
-    headers.set("access-control-allow-methods", cors.methods.join(", "));
-    const allowedHeaders =
-      cors.allowedHeaders ??
-      (request.headers.get("access-control-request-headers") ?? "")
-        .split(",")
-        .map((name) => name.trim())
-        .filter(Boolean);
-    if (allowedHeaders.length > 0) {
-      headers.set("access-control-allow-headers", allowedHeaders.join(", "));
+    headers.set("access-control-allow-methods", cached.methodsHeader);
+    if (cached.allowedHeadersHeader !== undefined) {
+      if (cached.allowedHeadersHeader.length > 0) {
+        headers.set("access-control-allow-headers", cached.allowedHeadersHeader);
+      }
+    } else {
+      const requestedHeaders = request.headers.get("access-control-request-headers");
+      if (requestedHeaders !== null && requestedHeaders.trim().length > 0) {
+        headers.set("access-control-allow-headers", requestedHeaders);
+      }
     }
-    if (cors.maxAge !== undefined) {
-      headers.set("access-control-max-age", String(cors.maxAge));
+    if (cached.maxAgeHeader !== undefined) {
+      headers.set("access-control-max-age", cached.maxAgeHeader);
     }
     if (cors.credentials) {
       headers.set("access-control-allow-credentials", "true");
@@ -332,42 +365,64 @@ export function corsPreflight(
  * @param policies - The resolved policies.
  * @returns The response to send.
  */
+/**
+ * Synchronous half of {@link applyHttpPolicies} for header-only policies (`securityHeaders`
+ * and `cors`) when neither `etag` nor `compression` is configured.
+ *
+ * @internal
+ */
+export function applyHttpPoliciesSync(
+  request: Request,
+  response: Response,
+  policies: ResolvedHttpPolicies,
+): Response {
+  const security = policies.securityHeaders;
+  const cors = policies.cors;
+  let allowed: string | undefined;
+  if (cors !== undefined) {
+    allowed = allowedOrigin(request.headers.get("origin"), cors);
+  }
+  if (security === undefined && allowed === undefined) {
+    return response;
+  }
+
+  return withHeaders(response, (headers) => {
+    if (security !== undefined) {
+      for (let i = 0; i < security.length; i += 1) {
+        const entry = security[i]!;
+        if (!headers.has(entry[0])) {
+          headers.set(entry[0], entry[1]);
+        }
+      }
+    }
+    if (cors !== undefined && allowed !== undefined) {
+      const cached = getCorsCache(cors);
+      headers.set("access-control-allow-origin", allowed);
+      headers.set("vary", appendVary(headers.get("vary"), "origin"));
+      if (cors.credentials) {
+        headers.set("access-control-allow-credentials", "true");
+      }
+      if (cached.exposedHeadersHeader !== undefined) {
+        headers.set("access-control-expose-headers", cached.exposedHeadersHeader);
+      }
+    }
+  });
+}
+
+/**
+ * Applies the declared policies to one response.
+ *
+ * @param request - The request the response answers.
+ * @param response - The response the route or the runtime produced.
+ * @param policies - The resolved policies.
+ * @returns The response to send.
+ */
 export async function applyHttpPolicies(
   request: Request,
   response: Response,
   policies: ResolvedHttpPolicies,
 ): Promise<Response> {
-  let current = response;
-
-  if (policies.securityHeaders !== undefined) {
-    current = withHeaders(current, (headers) => {
-      for (const [name, value] of policies.securityHeaders ?? []) {
-        if (!headers.has(name)) {
-          headers.set(name, value);
-        }
-      }
-    });
-  }
-
-  if (policies.cors !== undefined) {
-    const origin = request.headers.get("origin");
-    const allowed = allowedOrigin(origin, policies.cors);
-    if (allowed !== undefined) {
-      current = withHeaders(current, (headers) => {
-        headers.set("access-control-allow-origin", allowed);
-        headers.set("vary", appendVary(headers.get("vary"), "origin"));
-        if (policies.cors?.credentials === true) {
-          headers.set("access-control-allow-credentials", "true");
-        }
-        if ((policies.cors?.exposedHeaders.length ?? 0) > 0) {
-          headers.set(
-            "access-control-expose-headers",
-            policies.cors?.exposedHeaders.join(", ") ?? "",
-          );
-        }
-      });
-    }
-  }
+  let current = applyHttpPoliciesSync(request, response, policies);
 
   if (policies.etag !== undefined) {
     current = await applyEtag(request, current, policies.etag);
@@ -513,21 +568,31 @@ function allowedOrigin(origin: string | null, cors: ResolvedCors): string | unde
   if (cors.origin === "*") {
     return "*";
   }
-  const list = Array.isArray(cors.origin) ? cors.origin : [cors.origin];
-  if (origin !== null && list.includes(origin)) {
-    return origin;
+  if (origin === null) {
+    return undefined;
   }
-  return undefined;
+  if (typeof cors.origin === "string") {
+    return cors.origin === origin ? origin : undefined;
+  }
+  return getCorsCache(cors).originSet?.has(origin) ? origin : undefined;
 }
 
 function withHeaders(response: Response, mutate: (headers: Headers) => void): Response {
-  const headers = new Headers(response.headers);
-  mutate(headers);
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers,
-  });
+  if (response.status < 200 || response.status > 599) {
+    return response;
+  }
+  try {
+    mutate(response.headers);
+    return response;
+  } catch {
+    const headers = new Headers(response.headers);
+    mutate(headers);
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    });
+  }
 }
 
 async function applyEtag(
@@ -609,7 +674,8 @@ function compressResponse(
 }
 
 function isCompressible(contentType: string): boolean {
-  const type = contentType.split(";")[0]?.trim().toLowerCase() ?? "";
+  const semi = contentType.indexOf(";");
+  const type = (semi >= 0 ? contentType.slice(0, semi) : contentType).trim().toLowerCase();
   if (type === "") {
     return false;
   }

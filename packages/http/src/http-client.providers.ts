@@ -76,6 +76,8 @@ export function resolveHttpOptions(options: HttpClientOptions): ResolvedHttpOpti
     fetch: options.fetch ?? fetch,
     resolveAddresses: options.resolveAddresses ?? resolveHostname,
     pinResolvedAddress: options.pinResolvedAddress ?? true,
+    circuitBreaker: options.circuitBreaker === false ? undefined : options.circuitBreaker,
+    bulkhead: options.bulkhead === false ? undefined : options.bulkhead,
   });
 }
 

@@ -62,7 +62,14 @@ type CronContractAssertions = [
   Expect<
     Equals<
       keyof CronModuleOptions,
-      "configuration" | "source" | "key" | "cronJobs" | "intervals" | "timeouts"
+      | "configuration"
+      | "source"
+      | "key"
+      | "cronJobs"
+      | "intervals"
+      | "timeouts"
+      | "lockStore"
+      | "lockTtlMs"
     >
   >,
   Expect<Equals<CronModuleOptions["configuration"], ConfigurationToken<CronConfiguration>>>,

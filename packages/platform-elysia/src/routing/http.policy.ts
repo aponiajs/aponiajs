@@ -1,11 +1,6 @@
 import {
-  applyHttpPolicies,
-  applyHttpPolicyResponses,
-  corsPreflight,
+  createRequestPipeline,
   notifyRequestError,
-  notifyRequestResponse,
-  runHttpPolicyRequests,
-  runRequestHooks,
   type HttpPolicy,
   type RequestLifecycleHook,
   type ResolvedHttpPolicies,
@@ -44,43 +39,20 @@ export function installHttpPolicies(
   const { policies } = installed;
   const pluginPolicies = installed.pluginPolicies ?? [];
   const hooks = installed.hooks ?? [];
-  if (policies === undefined && pluginPolicies.length === 0 && hooks.length === 0) {
+  const pipeline = createRequestPipeline({
+    negotiator: undefined,
+    policies,
+    pluginPolicies,
+    hooks,
+  });
+  if (pipeline === undefined) {
     return;
   }
 
   const wrapper =
     (fetch: (request: Request, ...rest: unknown[]) => Response | Promise<Response>) =>
-    async (request: Request, ...rest: unknown[]): Promise<Response> => {
-      const respond = async (base: Response): Promise<Response> => {
-        let current =
-          policies === undefined ? base : await applyHttpPolicies(request, base, policies);
-        current = await applyHttpPolicyResponses(pluginPolicies, request, current);
-        await notifyRequestResponse(hooks, request, current);
-        return current;
-      };
-
-      const lifecycle = async (current: Request): Promise<Response> => {
-        const fromHook = await runRequestHooks(hooks, current);
-        if (fromHook !== undefined) {
-          return await respond(fromHook);
-        }
-        const fromPolicy = await runHttpPolicyRequests(pluginPolicies, current);
-        if (fromPolicy !== undefined) {
-          return await respond(fromPolicy);
-        }
-        const preflight = policies === undefined ? undefined : corsPreflight(current, policies);
-        if (preflight !== undefined) {
-          return await respond(preflight);
-        }
-        return await respond(await fetch(current, ...rest));
-      };
-
-      const wrapped = hooks.reduceRight<(request: Request) => Promise<Response>>(
-        (inner, hook) => (hook.wrap === undefined ? inner : (next) => hook.wrap!(next, inner)),
-        lifecycle,
-      );
-      return await wrapped(request);
-    };
+    (request: Request, ...rest: unknown[]): Response | Promise<Response> =>
+      pipeline(request, (current) => fetch(current, ...rest));
 
   (
     application as unknown as {

@@ -30,7 +30,8 @@ export type {
   IntervalOptions,
   TimeoutOptions,
 } from "./interfaces/schedule.interface.ts";
-export { CronScheduler } from "./scheduler/cron-scheduler.ts";
+export { CronScheduler, type CronSchedulerLockOptions } from "./scheduler/cron-scheduler.ts";
+export type { CronLockHandle, CronLockStore } from "./interfaces/cron-lock-store.interface.ts";
 export type { CronModuleOptions } from "./interfaces/cron-module.interface.ts";
 export type {
   CronConfiguration,

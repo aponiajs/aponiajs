@@ -101,7 +101,7 @@ export function compileHealthProbes(
     probes.map((probe) =>
       Object.freeze({
         mount: createMount(probe.path),
-        handler: async () => answerHealthProbe(probe.kind, readiness),
+        handler: () => answerHealthProbe(probe.kind, readiness),
       }),
     ),
   );
@@ -133,6 +133,23 @@ function createMount(path: string): MountedRoute {
   });
 }
 
+const HEALTH_PASS_BODY = JSON.stringify({ status: "pass" satisfies AponiaHealthStatus });
+const HEALTH_FAIL_BODY = JSON.stringify({ status: "fail" satisfies AponiaHealthStatus });
+const HEALTH_PASS_INIT = {
+  status: 200,
+  headers: {
+    "content-type": healthContentType,
+    "cache-control": "no-store",
+  },
+} as const;
+const HEALTH_FAIL_INIT = {
+  status: 503,
+  headers: {
+    "content-type": healthContentType,
+    "cache-control": "no-store",
+  },
+} as const;
+
 /**
  * The answer one probe gives.
  *
@@ -144,13 +161,7 @@ export function answerHealthProbe(
   readiness: ApplicationReadiness,
 ): Response {
   const ready = kind === "liveness" || readiness.isReady();
-  const status: AponiaHealthStatus = ready ? "pass" : "fail";
-
-  return new Response(JSON.stringify(Object.freeze({ status })), {
-    status: ready ? 200 : 503,
-    headers: {
-      "content-type": healthContentType,
-      "cache-control": "no-store",
-    },
-  });
+  return ready
+    ? new Response(HEALTH_PASS_BODY, HEALTH_PASS_INIT)
+    : new Response(HEALTH_FAIL_BODY, HEALTH_FAIL_INIT);
 }

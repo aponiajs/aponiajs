@@ -45,6 +45,11 @@ interface VersionTable {
  *
  * @internal
  */
+import { slicePathname } from "../kernel/request-decoding.ts";
+
+/**
+ * Compiles a request-time API version negotiator from mounted routes and versioning options.
+ */
 export function createVersionNegotiator(
   routes: readonly VersionNegotiationRoute[],
   options: AponiaVersioningOptions | undefined,
@@ -60,8 +65,8 @@ export function createVersionNegotiator(
   }
 
   return (request: Request): Request | Response | undefined => {
-    const url = new URL(request.url);
-    const publicPath = stripRoutePrefix(url.pathname, routePrefix);
+    const pathname = slicePathname(request.url);
+    const publicPath = stripRoutePrefix(pathname, routePrefix);
     if (publicPath === undefined) {
       return undefined;
     }
@@ -77,7 +82,7 @@ export function createVersionNegotiator(
     const versionPrefix = versions.get(version);
     if (versionPrefix === undefined) {
       return versionProblem(
-        `API version ${version} is not available for ${request.method.toUpperCase()} ${url.pathname}.`,
+        `API version ${version} is not available for ${request.method.toUpperCase()} ${pathname}.`,
       );
     }
     const rewritten = new URL(request.url);

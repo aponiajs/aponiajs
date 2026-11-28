@@ -454,6 +454,7 @@ export type {
   GatewayServer,
   GatewaySocket,
 } from "./interfaces/gateway.interface.ts";
+export { RouteContextMask } from "./kernel/route-context-mask.ts";
 export type {
   HostRequestInfo,
   HttpKernelOptions,
@@ -468,12 +469,13 @@ export {
   readCookies,
   readHeaders,
   readQuery,
+  slicePathname,
 } from "./kernel/request-decoding.ts";
-export { buildResponse } from "./kernel/response-building.ts";
+export { buildResponse, hasResponseHeaderEntries } from "./kernel/response-building.ts";
 export { clearCookie, writeCookie } from "./kernel/cookies.ts";
 export type { CookieOptions } from "./kernel/cookies.ts";
-export { validateSlot } from "./kernel/validation.ts";
-export type { ValidationIssue } from "./kernel/validation.ts";
+export { compileSlotValidator, validateSlot } from "./kernel/validation.ts";
+export type { CompiledSlotValidator, ValidationIssue } from "./kernel/validation.ts";
 export type { ResolvedMiddlewareConfig } from "./interfaces/middleware-consumer.interface.ts";
 export { HttpAdapterHost, provideHttpAdapterHost } from "./host/http-adapter-host.ts";
 export {
@@ -605,4 +607,5 @@ export { matchesFilter } from "./kernel/filter-matching.ts";
 export { createRequestPipeline } from "./application/request-pipeline.ts";
 export type { RequestPipelineOptions } from "./application/request-pipeline.ts";
 export { compareRouteSpecificity } from "./routing/route-specificity.ts";
+export { stripDangerousKeys } from "./routing/sanitize-input.ts";
 export { mergeGatewayOptions } from "./websockets/gateway-options.ts";

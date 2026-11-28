@@ -22,44 +22,48 @@ it satisfies both this guide and `RULES.md`.
 
 Bun workspace. Framework packages live in `packages/`:
 
-| Package                     | Owns                                                            | Runtime dependencies                                                                             |
-| --------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `@aponiajs/common`          | Decorators, contracts, tokens, providers, errors, WebSockets    | `reflect-metadata`, `@standard-schema/spec`; `typebox` type-only                                 |
-| `@aponiajs/compiler`        | Scoped lifetimes, borrow views, typestate, linear consumption   | `common`                                                                                         |
-| `@aponiajs/core`            | Module graph, visibility rules, dependency injection            | `@aponiajs/common`                                                                               |
-| `@aponiajs/cache`           | Bounded application cache, TTL, pluggable store                 | `common`                                                                                         |
-| `@aponiajs/compression`     | Brotli/gzip response compression, threshold negotiation         | `common`                                                                                         |
-| `@aponiajs/events`          | Typed in-process events, ordered handlers, listeners            | `common`, `reflect-metadata`                                                                     |
-| `@aponiajs/http`            | SSRF-safe outbound HTTP, timeouts, bounded responses            | `common`, `@standard-schema/spec`, `ipaddr.js`                                                   |
-| `@aponiajs/rate-limit`      | Fixed-window request limiting, guard, store                     | `common`, `platform-elysia`                                                                      |
-| `@aponiajs/security`        | Security headers and signed double-submit CSRF                  | `common`                                                                                         |
-| `@aponiajs/session`         | Signed session cookies, session service, bounded store          | `common`                                                                                         |
-| `@aponiajs/auth`            | JWT authentication, guards, refresh rotation, revocation        | `common`, `jose`                                                                                 |
-| `@aponiajs/queue`           | In-process job queue, retries, dead letters, outbox             | `common`, `compiler`                                                                             |
-| `@aponiajs/database`        | Drizzle boundary, repositories, SQL migrations                  | `common`, `compiler`, `drizzle-orm`                                                              |
-| `@aponiajs/microservices`   | Message patterns, CBOR client/server, optional broker adapters  | `common`, `cborg`; optional broker SDK peers                                                     |
-| `@aponiajs/view`            | Blade views, components, props, slots, and shared data          | `common`                                                                                         |
-| `@aponiajs/serverless`      | AWS Lambda and Web Fetch adapters for an application            | —                                                                                                |
-| `@aponiajs/nitro`           | Nitro delivery adapter for an application                       | `serverless`, peer `nitro`                                                                       |
-| `@aponiajs/platform-elysia` | Elysia adapter, HTTP routes, WebSocket gateways, plugins        | `common`, `core`; peer `elysia`, `typebox`                                                       |
-| `@aponiajs/platform-h3`     | AponiaJS on the H3 runtime                                      | `common`, `core`; peer `h3`, `crossws`                                                           |
-| `@aponiajs/platform-hono`   | AponiaJS on the Hono runtime                                    | `common`, `core`; peer `hono`                                                                    |
-| `@aponiajs/cli`             | `aponia new` and `aponia generate` schematics                   | `@aponiajs/schematics`, `change-case`, `ts-morph`, `yargs-parser`, `inflection`, `oxfmt` (exact) |
-| `@aponiajs/schematics`      | The Nest-shaped schematic collection `aponia-cli.json` names    | `change-case`, `inflection`                                                                      |
-| `create-aponia`             | `bun create aponia` entrypoint into the same generator          | `@aponiajs/cli`                                                                                  |
-| `@aponiajs/cron`            | Scheduled jobs declared in a module, from validated config      | `common`, `croner`                                                                               |
-| `@aponiajs/cors`            | Cross-origin policy declared in a module, from validated config | `common`                                                                                         |
-| `@aponiajs/devtools`        | Opt-in devtools served by the running application itself        | `cli`, `common`, `core`                                                                          |
-| `@aponiajs/graphql`         | GraphQL endpoint served in a module, from validated config      | `common`, `graphql-yoga`; peer `graphql`                                                         |
-| `@aponiajs/mcp`             | Model Context Protocol endpoint mounted from the official SDK   | `common`, `@modelcontextprotocol/server`; peer `elysia`, `hono`, `h3`, `zod`                     |
-| `@aponiajs/testing`         | Test application builder, provider overrides, teardown          | `common`, `core`, `platform-elysia`; peer `elysia`                                               |
-| `@aponiajs/openapi`         | OpenAPI document served for an application's routes             | `common`, `core`                                                                                 |
-| `@aponiajs/config`          | Nest-style `.env`, namespaces, and validated config             | `common`                                                                                         |
-| `@aponiajs/cqrs`            | `CommandBus`, `QueryBus`, `EventBus`, `@Saga`, `AggregateRoot`  | `common`                                                                                         |
-| `@aponiajs/mapped-types`    | `PartialType`, `PickType`, `OmitType`, `IntersectionType`       | `common`, `typebox`                                                                              |
-| `@aponiajs/serve-static`    | Static file and SPA serving via `ServeStaticModule`             | `common`                                                                                         |
-| `@aponiajs/terminus`        | `TerminusModule`, `HealthCheckService`, health indicators       | `common`                                                                                         |
-| `aponiajs`                  | Reserved public facade, private and unpublished                 | —                                                                                                |
+| Package                     | Owns                                                               | Runtime dependencies                                                                             |
+| --------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `@aponiajs/common`          | Decorators, contracts, tokens, providers, errors, WebSockets       | `reflect-metadata`, `@standard-schema/spec`; `typebox` type-only                                 |
+| `@aponiajs/compiler`        | Scoped lifetimes, borrow views, typestate, linear consumption      | `common`                                                                                         |
+| `@aponiajs/core`            | Module graph, visibility rules, dependency injection               | `@aponiajs/common`                                                                               |
+| `@aponiajs/cache`           | Bounded application cache, TTL, pluggable store                    | `common`                                                                                         |
+| `@aponiajs/compression`     | Brotli/gzip response compression, threshold negotiation            | `common`                                                                                         |
+| `@aponiajs/events`          | Typed in-process events, ordered handlers, listeners               | `common`, `reflect-metadata`                                                                     |
+| `@aponiajs/http`            | SSRF-safe outbound HTTP, timeouts, bounded responses               | `common`, `@standard-schema/spec`, `ipaddr.js`                                                   |
+| `@aponiajs/rate-limit`      | Fixed-window request limiting, guard, store                        | `common`, `platform-elysia`                                                                      |
+| `@aponiajs/security`        | Security headers and signed double-submit CSRF                     | `common`                                                                                         |
+| `@aponiajs/session`         | Signed session cookies, session service, bounded store             | `common`                                                                                         |
+| `@aponiajs/auth`            | JWT authentication, guards, refresh rotation, revocation           | `common`, `jose`                                                                                 |
+| `@aponiajs/queue`           | In-process job queue, retries, dead letters, outbox                | `common`, `compiler`                                                                             |
+| `@aponiajs/database`        | Drizzle boundary, repositories, SQL migrations                     | `common`, `compiler`, `drizzle-orm`                                                              |
+| `@aponiajs/microservices`   | Message patterns, CBOR client/server, optional broker adapters     | `common`, `cborg`; optional broker SDK peers                                                     |
+| `@aponiajs/view`            | Blade views, components, props, slots, and shared data             | `common`                                                                                         |
+| `@aponiajs/serverless`      | AWS Lambda and Web Fetch adapters for an application               | —                                                                                                |
+| `@aponiajs/nitro`           | Nitro delivery adapter for an application                          | `serverless`, peer `nitro`                                                                       |
+| `@aponiajs/platform-elysia` | Elysia adapter, HTTP routes, WebSocket gateways, plugins           | `common`, `core`; peer `elysia`, `typebox`                                                       |
+| `@aponiajs/platform-h3`     | AponiaJS on the H3 runtime                                         | `common`, `core`; peer `h3`, `crossws`                                                           |
+| `@aponiajs/platform-hono`   | AponiaJS on the Hono runtime                                       | `common`, `core`; peer `hono`                                                                    |
+| `@aponiajs/cli`             | `aponia new` and `aponia generate` schematics                      | `@aponiajs/schematics`, `change-case`, `ts-morph`, `yargs-parser`, `inflection`, `oxfmt` (exact) |
+| `@aponiajs/schematics`      | The Nest-shaped schematic collection `aponia-cli.json` names       | `change-case`, `inflection`                                                                      |
+| `create-aponia`             | `bun create aponia` entrypoint into the same generator             | `@aponiajs/cli`                                                                                  |
+| `@aponiajs/cron`            | Scheduled jobs declared in a module, from validated config         | `common`, `croner`                                                                               |
+| `@aponiajs/cors`            | Cross-origin policy declared in a module, from validated config    | `common`                                                                                         |
+| `@aponiajs/devtools`        | Opt-in devtools served by the running application itself           | `cli`, `common`, `core`                                                                          |
+| `@aponiajs/graphql`         | GraphQL endpoint served in a module, from validated config         | `common`, `graphql-yoga`; peer `graphql`                                                         |
+| `@aponiajs/mcp`             | Model Context Protocol endpoint mounted from the official SDK      | `common`, `@modelcontextprotocol/server`; peer `elysia`, `hono`, `h3`, `zod`                     |
+| `@aponiajs/testing`         | Test application builder, provider overrides, teardown             | `common`, `core`, `platform-elysia`; peer `elysia`                                               |
+| `@aponiajs/openapi`         | OpenAPI document served for an application's routes                | `common`, `core`                                                                                 |
+| `@aponiajs/config`          | Nest-style `.env`, namespaces, and validated config                | `common`                                                                                         |
+| `@aponiajs/cqrs`            | `CommandBus`, `QueryBus`, `EventBus`, `@Saga`, `AggregateRoot`     | `common`                                                                                         |
+| `@aponiajs/mapped-types`    | `PartialType`, `PickType`, `OmitType`, `IntersectionType`          | `common`, `typebox`                                                                              |
+| `@aponiajs/serve-static`    | Static file and SPA serving via `ServeStaticModule`                | `common`                                                                                         |
+| `@aponiajs/terminus`        | `TerminusModule`, `HealthCheckService`, health indicators          | `common`                                                                                         |
+| `@aponiajs/metrics`         | Zero-dep Prometheus metrics, HTTP histograms, runtime gauges       | `common`                                                                                         |
+| `@aponiajs/opentelemetry`   | Opt-in OpenTelemetry tracing, W3C propagation, server spans        | `common`, `@opentelemetry/api`                                                                   |
+| `@aponiajs/idempotency`     | `Idempotency-Key` deduplication, conflict guard, replay            | `common`                                                                                         |
+| `@aponiajs/redis`           | Redis client and distributed stores for cache/auth/rate-limit/cron | `common`; optional peer `redis`                                                                  |
+| `aponiajs`                  | Reserved public facade, private and unpublished                    | —                                                                                                |
 
 Supporting directories: `examples/` for executable examples, `docs/` for
 published documentation, `scripts/`
@@ -138,6 +142,10 @@ being changed:
 | [`packages/mapped-types`](./packages/mapped-types/AGENTS.md)       | `PartialType`, `PickType`, `OmitType`, `IntersectionType`      |
 | [`packages/serve-static`](./packages/serve-static/AGENTS.md)       | Static file and SPA serving via `ServeStaticModule`            |
 | [`packages/terminus`](./packages/terminus/AGENTS.md)               | `TerminusModule`, `HealthCheckService`, health indicators      |
+| [`packages/metrics`](./packages/metrics/AGENTS.md)                 | Prometheus metrics exposition, HTTP histograms, runtime gauges |
+| [`packages/opentelemetry`](./packages/opentelemetry/AGENTS.md)     | OpenTelemetry tracing, W3C propagation, and HTTP server spans  |
+| [`packages/idempotency`](./packages/idempotency/AGENTS.md)         | `Idempotency-Key` deduplication, conflict guard, and replay    |
+| [`packages/redis`](./packages/redis/AGENTS.md)                     | Redis client lifecycle and distributed store implementations   |
 | [`packages/aponiajs`](./packages/aponiajs/AGENTS.md)               | The reserved, still-private facade                             |
 | [`scripts`](./scripts/AGENTS.md)                                   | Release channel derivation and documentation guards            |
 | [`docs`](./docs/AGENTS.md)                                         | The published documentation set and what guards it             |

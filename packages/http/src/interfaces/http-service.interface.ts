@@ -1,5 +1,7 @@
 import type { ModuleAsyncOptions } from "@aponiajs/common";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
+import type { BulkheadOptions } from "../resilience/bulkhead.ts";
+import type { CircuitBreakerOptions } from "../resilience/circuit-breaker.ts";
 
 /** The redirect policy a request selects. */
 export type HttpRedirectPolicy = "follow" | "error" | "manual";
@@ -32,6 +34,10 @@ export interface HttpModuleOptions {
    * the address itself.
    */
   readonly pinResolvedAddress?: boolean;
+  /** Optional per-origin circuit breaker configuration (`false` disables). */
+  readonly circuitBreaker?: CircuitBreakerOptions | false;
+  /** Optional concurrency bulkhead configuration (`false` disables). */
+  readonly bulkhead?: BulkheadOptions | false;
 }
 
 /** The validated options the service reads. */
@@ -47,6 +53,8 @@ export interface ResolvedHttpOptions {
   readonly fetch: typeof fetch;
   readonly resolveAddresses: (hostname: string) => Promise<readonly string[]>;
   readonly pinResolvedAddress: boolean;
+  readonly circuitBreaker?: CircuitBreakerOptions;
+  readonly bulkhead?: BulkheadOptions;
 }
 
 /** Options one request accepts. */

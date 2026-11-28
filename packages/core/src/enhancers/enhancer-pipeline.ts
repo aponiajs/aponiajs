@@ -49,6 +49,16 @@ function runRemainingGuards(
  * the execution context pointer without allocating per-request objects, and
  * fast-aborts on rejection without throwing or unwinding the call stack.
  */
+function isZeroArgGuard(guard: CanActivate): boolean {
+  if (guard.canActivate.length !== 0) {
+    return false;
+  }
+  return !/\barguments\b/.test(Function.prototype.toString.call(guard.canActivate));
+}
+
+/**
+ * Compiles route guards into an unrolled synchronous-capable hook when possible.
+ */
 export function compileUnrolledGuards(
   guards: readonly CanActivate[],
   execContext: StaticRouteExecutionContext,
@@ -60,6 +70,23 @@ export function compileUnrolledGuards(
 
   if (guards.length === 1) {
     const g0 = guards[0]!;
+    if (isZeroArgGuard(g0)) {
+      return function zeroArgSingleGuardHook(context: RouteContext) {
+        const result = (g0.canActivate as () => boolean | Promise<boolean>)();
+        if (result === false) {
+          return extractForbiddenResponse(context, forbiddenResponse);
+        }
+        if (result instanceof Promise) {
+          return result.then((allowed) => {
+            if (!allowed) {
+              return extractForbiddenResponse(context, forbiddenResponse);
+            }
+            return undefined;
+          });
+        }
+        return undefined;
+      };
+    }
     return function singleGuardHook(context: RouteContext) {
       const requestContext = execContext.fork(context);
       const result = g0.canActivate(requestContext);

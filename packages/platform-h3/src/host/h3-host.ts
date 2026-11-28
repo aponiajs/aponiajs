@@ -2,9 +2,12 @@ import { H3, defineWebSocketHandler, getRequestIP, type H3Event } from "h3";
 import {
   answerStaticAsset,
   buildResponse,
+  hasResponseHeaderEntries,
   readCookies,
   readHeaders,
   readQuery,
+  RouteContextMask,
+  slicePathname,
   statusCodeOf,
   stripRoutePrefix,
   type GatewayHooks,
@@ -21,7 +24,7 @@ import {
   type ResolvedMiddlewareConfig,
   type StaticAssetsOptions,
 } from "@aponiajs/common";
-import { runMiddlewareChain } from "@aponiajs/core";
+import { compileMiddlewareConfigs, runCompiledMiddlewareChain } from "@aponiajs/core";
 
 /** The native application this platform creates. */
 export type H3Application = H3;
@@ -159,10 +162,23 @@ export function createH3Host(
       handler: PlatformRouteHandler,
       options: PlatformMountOptions = {},
     ): void {
-      const run = async (event: H3Event): Promise<Response> => {
-        const context = createRouteContext(event, mount, options.store ?? {});
-        const response = await handler(context);
-        return applySettings(response, context.set);
+      const path = mount.route.path;
+      const store = options.store ?? {};
+      const mask = mount.contextMask;
+      const hasParams =
+        mask === undefined
+          ? path.includes(":") || path.includes("*")
+          : (mask & (RouteContextMask.PARAMS | RouteContextMask.FULL_CONTEXT)) !== 0;
+
+      const run = (event: H3Event): Response | Promise<Response> => {
+        const context = new LazyH3RouteContext(event, path, store, hasParams);
+        const response = handler(context as unknown as PlatformRouteContext);
+        if (response instanceof Response) {
+          return context.hasMutatedSettings ? applySettings(response, context.set) : response;
+        }
+        return response.then((settled) =>
+          context.hasMutatedSettings ? applySettings(settled, context.set) : settled,
+        );
       };
       if (mount.route.method === "ALL") {
         application.all(mount.route.path, run as never);
@@ -178,13 +194,15 @@ export function createH3Host(
       if (configs.length === 0) {
         return;
       }
+      const compiledConfigs = compileMiddlewareConfigs(configs);
+      const prefix = options.prefix ?? "";
+      const store = options.store ?? {};
       application.use(async (event, next) => {
-        const prefix = options.prefix ?? "";
         const path = event.url.pathname;
         const pathname = stripRoutePrefix(path, prefix) ?? path;
-        const context = createMiddlewareContext(event, pathname, options.store ?? {});
-        const result = await runMiddlewareChain(
-          configs,
+        const context = new LazyH3RouteContext(event, pathname, store, false);
+        const result = await runCompiledMiddlewareChain(
+          compiledConfigs,
           context,
           pathname,
           event.req.method,
@@ -194,15 +212,17 @@ export function createH3Host(
           },
         );
         if (result instanceof Response) {
-          return applySettings(result, context.set);
+          return context.hasMutatedSettings ? applySettings(result, context.set) : result;
         }
-        if (typeof event.res.headers === "object") {
+        if (
+          context.hasMutatedSettings &&
+          hasResponseHeaderEntries(context.set.headers) &&
+          typeof event.res.headers === "object"
+        ) {
           for (const [name, value] of Object.entries(context.set.headers)) {
             if (value === undefined) {
               continue;
             }
-            // Two cookies are two headers: joining them would make the browser
-            // read one malformed cookie.
             if (Array.isArray(value)) {
               for (const item of value) {
                 event.res.headers.append(name, String(item));
@@ -237,6 +257,9 @@ export function createH3Host(
       application: H3Application,
       port: number,
       pipeline?: RequestPipeline,
+      staticRoutes?: Readonly<
+        Record<string, Response | ((request: Request) => Response | Promise<Response>)>
+      >,
     ): Promise<H3Listener> {
       const sockets = crosswsAdapter();
       const server = (
@@ -246,21 +269,29 @@ export function createH3Host(
         }
       )({
         port,
+        ...(staticRoutes === undefined || pipeline !== undefined ? {} : { routes: staticRoutes }),
         fetch: (request: Request, bunServer: unknown) => {
-          const path = new URL(request.url).pathname;
           if (
             sockets !== undefined &&
-            gateways.has(path) &&
+            gateways.size > 0 &&
             request.headers.get("upgrade")?.toLowerCase() === "websocket"
           ) {
-            return sockets.handleUpgrade(request, bunServer);
+            const path = slicePathname(request.url);
+            if (gateways.has(path)) {
+              return sockets.handleUpgrade(request, bunServer);
+            }
           }
-          const dispatch = (current: Request) =>
-            (application.fetch as unknown as (request: Request, env: unknown) => Response)(
-              current,
-              { server: bunServer },
-            );
-          return pipeline === undefined ? dispatch(request) : pipeline(request, dispatch);
+          return pipeline === undefined
+            ? (application.fetch as unknown as (request: Request, env: unknown) => Response)(
+                request,
+                { server: bunServer },
+              )
+            : pipeline(request, (current: Request) =>
+                (application.fetch as unknown as (request: Request, env: unknown) => Response)(
+                  current,
+                  { server: bunServer },
+                ),
+              );
         },
         ...(sockets === undefined
           ? {}
@@ -337,55 +368,119 @@ export function createH3Host(
   });
 }
 
-function createRouteContext(
-  event: H3Event,
-  mount: MountedRoute,
-  store: Record<string, unknown>,
-): PlatformRouteContext {
-  const params = (event.context as { readonly params?: Record<string, string> }).params ?? {};
-  return createContextValues(event, mount.route.path, store, { ...params });
-}
+const emptyFrozenParams: Record<string, string> = Object.freeze({});
 
-function createMiddlewareContext(
-  event: H3Event,
-  pathname: string,
-  store: Record<string, unknown>,
-): PlatformRouteContext {
-  return createContextValues(event, pathname, store, {});
-}
+class LazyH3RouteContext {
+  body: unknown = undefined;
+  readonly request: Request;
+  readonly path: string;
+  readonly store: Record<string, unknown>;
+  readonly native: H3Event;
 
-function createContextValues(
-  event: H3Event,
-  path: string,
-  store: Record<string, unknown>,
-  params: Record<string, string>,
-): PlatformRouteContext {
-  const request = event.req as unknown as Request;
-  const url = event.url;
-  const set: {
+  readonly #hasParams: boolean;
+  #query: Readonly<Record<string, string | string[]>> | undefined;
+  #params: Record<string, string> | undefined;
+  #headers: Readonly<Record<string, string>> | undefined;
+  #cookie: Readonly<Record<string, { readonly value: string }>> | undefined;
+  #ip: string | undefined | null = null;
+  #set:
+    | {
+        status?: number | string;
+        headers: Record<string, string | number | string[] | undefined>;
+      }
+    | undefined;
+  #server: { readonly requestIP?: () => { readonly address?: string } | undefined } | undefined;
+
+  constructor(native: H3Event, path: string, store: Record<string, unknown>, hasParams: boolean) {
+    this.native = native;
+    this.request = native.req as unknown as Request;
+    this.path = path;
+    this.store = store;
+    this.#hasParams = hasParams;
+  }
+
+  get hasMutatedSettings(): boolean {
+    if (this.#set === undefined) {
+      return false;
+    }
+    return this.#set.status !== undefined || hasResponseHeaderEntries(this.#set.headers);
+  }
+
+  get set(): {
     status?: number | string;
     headers: Record<string, string | number | string[] | undefined>;
-  } = { headers: {} };
-  const address = peerAddress(event);
-  return {
-    body: undefined,
-    query: readQuery(url),
-    params,
-    headers: readHeaders(request),
-    cookie: readCookies(request),
-    request,
-    path,
-    set,
-    store,
-    ip: address,
-    host: url.host,
-    status: (status, body) => {
-      set.status = status;
-      return buildResponse(body, set, request.method);
-    },
-    ...(address === undefined ? {} : { server: { requestIP: () => ({ address }) } }),
-    native: event,
-  } as PlatformRouteContext;
+  } {
+    return (this.#set ??= { headers: {} });
+  }
+
+  get params(): Record<string, string> {
+    if (this.#params === undefined) {
+      if (!this.#hasParams) {
+        this.#params = emptyFrozenParams;
+      } else {
+        const raw = (this.native.context as { readonly params?: Record<string, string> }).params;
+        this.#params = raw === undefined ? emptyFrozenParams : { ...raw };
+      }
+    }
+    return this.#params;
+  }
+
+  set params(value: Record<string, string>) {
+    this.#params = value;
+  }
+
+  get query(): Readonly<Record<string, string | string[]>> {
+    return (this.#query ??= readQuery(this.native.url));
+  }
+
+  set query(value: Readonly<Record<string, string | string[]>>) {
+    this.#query = value;
+  }
+
+  get headers(): Readonly<Record<string, string>> {
+    return (this.#headers ??= readHeaders(this.request));
+  }
+
+  set headers(value: Readonly<Record<string, string>>) {
+    this.#headers = value;
+  }
+
+  get cookie(): Readonly<Record<string, { readonly value: string }>> {
+    return (this.#cookie ??= readCookies(this.request));
+  }
+
+  set cookie(value: Readonly<Record<string, { readonly value: string }>>) {
+    this.#cookie = value;
+  }
+
+  get host(): string {
+    return this.native.url.host;
+  }
+
+  get ip(): string | undefined {
+    if (this.#ip === null) {
+      this.#ip = peerAddress(this.native);
+    }
+    return this.#ip;
+  }
+
+  get server():
+    | { readonly requestIP?: () => { readonly address?: string } | undefined }
+    | undefined {
+    if (this.#server === undefined) {
+      const address = this.ip;
+      if (address !== undefined) {
+        this.#server = { requestIP: () => ({ address }) };
+      }
+    }
+    return this.#server;
+  }
+
+  status = (status: number | string, body?: unknown): Response => {
+    const s = this.set;
+    s.status = status;
+    return buildResponse(body, s, this.request.method);
+  };
 }
 
 function applySettings(
@@ -395,19 +490,26 @@ function applySettings(
     readonly headers: Record<string, string | number | string[] | undefined>;
   },
 ): Response {
+  const hasHeaders = hasResponseHeaderEntries(set.headers);
+  if (!hasHeaders && set.status === undefined) {
+    return response;
+  }
+
   const headers = new Headers(response.headers);
-  for (const [name, value] of Object.entries(set.headers)) {
-    if (value === undefined) {
-      continue;
-    }
-    if (Array.isArray(value)) {
-      headers.delete(name);
-      for (const item of value) {
-        headers.append(name, String(item));
+  if (hasHeaders) {
+    for (const [name, value] of Object.entries(set.headers)) {
+      if (value === undefined) {
+        continue;
       }
-      continue;
+      if (Array.isArray(value)) {
+        headers.delete(name);
+        for (const item of value) {
+          headers.append(name, String(item));
+        }
+        continue;
+      }
+      headers.set(name, String(value));
     }
-    headers.set(name, String(value));
   }
 
   const requested =

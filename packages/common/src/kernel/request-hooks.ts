@@ -113,11 +113,19 @@ export async function notifyRequestResponse(
   request: Request,
   response: Response,
 ): Promise<void> {
-  for (const hook of hooks) {
-    if (hook.onResponse === undefined) {
+  for (let i = 0; i < hooks.length; i += 1) {
+    const onResponse = hooks[i]!.onResponse;
+    if (onResponse === undefined) {
       continue;
     }
-    await observe((current, value) => hook.onResponse!(current, value), request, response);
+    try {
+      const result = onResponse(request, response);
+      if (result !== undefined) {
+        await result;
+      }
+    } catch {
+      // An observer cannot change the answer it observes.
+    }
   }
 }
 
@@ -133,11 +141,19 @@ export async function notifyRequestError(
   request: Request,
   error: unknown,
 ): Promise<void> {
-  for (const hook of hooks) {
-    if (hook.onError === undefined) {
+  for (let i = 0; i < hooks.length; i += 1) {
+    const onError = hooks[i]!.onError;
+    if (onError === undefined) {
       continue;
     }
-    await observe((current, value) => hook.onError!(current, value), request, error);
+    try {
+      const result = onError(request, error);
+      if (result !== undefined) {
+        await result;
+      }
+    } catch {
+      // An observer cannot change the answer it observes.
+    }
   }
 }
 
@@ -196,16 +212,4 @@ function checkHook(hook: RequestLifecycleHook): RequestLifecycleHook {
     ...(hook.onResponse === undefined ? {} : { onResponse: hook.onResponse.bind(hook) }),
     ...(hook.onError === undefined ? {} : { onError: hook.onError.bind(hook) }),
   });
-}
-
-async function observe(
-  handler: (request: Request, value: never) => void | Promise<void>,
-  request: Request,
-  value: unknown,
-): Promise<void> {
-  try {
-    await handler(request, value as never);
-  } catch {
-    // An observer cannot change the answer it observes.
-  }
 }

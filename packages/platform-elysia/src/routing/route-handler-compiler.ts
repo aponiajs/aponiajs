@@ -3,6 +3,7 @@
 // decorated parameter at a non-leading index used to read a plan that does not
 // exist and throw, and now binds through the positional default.
 import {
+  stripDangerousKeys,
   type ArgumentMetadata,
   type ArgumentType,
   type ClassToken,
@@ -12,7 +13,7 @@ import {
   type RouteParameterMetadata,
 } from "@aponiajs/common";
 import { type ResolvedPipe } from "@aponiajs/common";
-import { executePipes, resolvePipe } from "@aponiajs/core";
+import { executePipes, executePipesSyncOrAsync, resolvePipe } from "@aponiajs/core";
 import type {
   CompiledElysiaRoute,
   ParameterBinding,
@@ -81,13 +82,13 @@ export function extractContextSourceValue(
     case "request":
       return context.request;
     case "body":
-      return context.body;
+      return stripDangerousKeys(context.body);
     case "query":
-      return context.query;
+      return stripDangerousKeys(context.query);
     case "params":
-      return context.params;
+      return stripDangerousKeys(context.params);
     case "headers":
-      return context.headers;
+      return stripDangerousKeys(context.headers);
     case "cookie":
       return context.cookie;
     case "ip": {
@@ -209,6 +210,16 @@ export function createRouteHandler(
         });
       }),
     );
+
+    if (!hasCustomParameters(route)) {
+      return compilePipedRouteHandler(
+        invoke,
+        instance,
+        parameterPlans,
+        argumentCount,
+        isPossiblyAsync(handler, route.declaredReturnKind),
+      );
+    }
 
     return async (context: RouteContext) => {
       // The dense fast paths below index `parameterPlans` by position; a
@@ -426,6 +437,129 @@ export function compileRouteHandler(
   ) as RouteHandlerFactory;
   routeHandlerFactories.set(cacheKey, factory);
   return factory;
+}
+
+function pipedParameterExpression(plan: ParameterExecutionPlan): string {
+  const parameterMeta: RouteParameterMetadata = {
+    index: plan.index,
+    kind: plan.kind,
+    ...(plan.property === undefined ? {} : { property: plan.property }),
+  };
+  if (
+    plan.kind === "body" ||
+    plan.kind === "query" ||
+    plan.kind === "params" ||
+    plan.kind === "headers"
+  ) {
+    if (plan.property === undefined) {
+      return `strip(${contextSource(parameterMeta)})`;
+    }
+    if (
+      plan.property === "__proto__" ||
+      plan.property === "constructor" ||
+      plan.property === "prototype"
+    ) {
+      return "undefined";
+    }
+  }
+  return parameterExpression(parameterMeta);
+}
+
+function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
+  return (
+    value !== null &&
+    (typeof value === "object" || typeof value === "function") &&
+    typeof (value as PromiseLike<unknown>).then === "function"
+  );
+}
+
+function thenOrCall(value: unknown, next: (resolved: unknown) => unknown): unknown {
+  return isPromiseLike(value) ? value.then(next) : next(value);
+}
+
+function compilePipedRouteHandler(
+  handler: (...arguments_: unknown[]) => unknown,
+  instance: unknown,
+  parameterPlans: readonly ParameterExecutionPlan[],
+  argumentCount: number,
+  possiblyAsync: boolean,
+): (context: RouteContext) => unknown {
+  const isDenseSingle = parameterPlans.length === 1 && argumentCount === 1;
+  if (isDenseSingle) {
+    const plan0 = parameterPlans[0]!;
+    const raw0 = pipedParameterExpression(plan0);
+    if (plan0.pipes.length === 0) {
+      return compileRouteHandler(raw0, possiblyAsync)(handler, instance);
+    }
+    const source = possiblyAsync
+      ? `async (context)=>await handler.call(instance,await execPipes(plans[0].pipes,${raw0},plans[0].metadata))`
+      : `(context)=>thenOrCall(execPipes(plans[0].pipes,${raw0},plans[0].metadata),(v0)=>handler.call(instance,v0))`;
+    // oxlint-disable-next-line typescript/no-implied-eval
+    const factory = Function(
+      "handler",
+      "instance",
+      "strip",
+      "execPipes",
+      "thenOrCall",
+      "plans",
+      `"use strict";return ${source}`,
+    ) as (
+      h: typeof handler,
+      i: unknown,
+      s: typeof stripDangerousKeys,
+      e: typeof executePipesSyncOrAsync,
+      t: typeof thenOrCall,
+      p: readonly ParameterExecutionPlan[],
+    ) => (context: RouteContext) => unknown;
+    return factory(
+      handler,
+      instance,
+      stripDangerousKeys,
+      executePipesSyncOrAsync,
+      thenOrCall,
+      parameterPlans,
+    );
+  }
+
+  const slotExprs = Array.from({ length: argumentCount }, () => "undefined");
+  for (let i = 0; i < parameterPlans.length; i++) {
+    const plan = parameterPlans[i]!;
+    const rawExpr = pipedParameterExpression(plan);
+    slotExprs[plan.index] =
+      plan.pipes.length > 0
+        ? `${possiblyAsync ? "await " : ""}execPipes(plans[${i}].pipes,${rawExpr},plans[${i}].metadata)`
+        : rawExpr;
+  }
+
+  const source = possiblyAsync
+    ? `async (context)=>await handler.call(instance,${slotExprs.join(",")})`
+    : `(context)=>{const args=[${slotExprs.join(",")}];for(let i=0;i<args.length;i++){if(isPromiseLike(args[i])){return Promise.all(args).then((resolved)=>handler.call(instance,...resolved));}}return handler.call(instance,...args);}`;
+
+  // oxlint-disable-next-line typescript/no-implied-eval
+  const factory = Function(
+    "handler",
+    "instance",
+    "strip",
+    "execPipes",
+    "isPromiseLike",
+    "plans",
+    `"use strict";return ${source}`,
+  ) as (
+    h: typeof handler,
+    i: unknown,
+    s: typeof stripDangerousKeys,
+    e: typeof executePipesSyncOrAsync,
+    pCheck: typeof isPromiseLike,
+    p: readonly ParameterExecutionPlan[],
+  ) => (context: RouteContext) => unknown;
+  return factory(
+    handler,
+    instance,
+    stripDangerousKeys,
+    executePipesSyncOrAsync,
+    isPromiseLike,
+    parameterPlans,
+  );
 }
 
 /**

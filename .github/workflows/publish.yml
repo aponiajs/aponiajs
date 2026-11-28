@@ -147,6 +147,10 @@ jobs:
           bun pm pack --cwd packages/mapped-types --destination "$GITHUB_WORKSPACE/release-artifacts/40-mapped-types"
           bun pm pack --cwd packages/serve-static --destination "$GITHUB_WORKSPACE/release-artifacts/41-serve-static"
           bun pm pack --cwd packages/terminus --destination "$GITHUB_WORKSPACE/release-artifacts/42-terminus"
+          bun pm pack --cwd packages/metrics --destination "$GITHUB_WORKSPACE/release-artifacts/43-metrics"
+          bun pm pack --cwd packages/opentelemetry --destination "$GITHUB_WORKSPACE/release-artifacts/44-opentelemetry"
+          bun pm pack --cwd packages/idempotency --destination "$GITHUB_WORKSPACE/release-artifacts/45-idempotency"
+          bun pm pack --cwd packages/redis --destination "$GITHUB_WORKSPACE/release-artifacts/46-redis"
 
       - name: Publish packages in dependency order
         working-directory: ${{ runner.temp }}
@@ -166,7 +170,7 @@ jobs:
           ALIAS_TAGS: ${{ steps.distribution.outputs.aliases }}
           VERSION: ${{ steps.distribution.outputs.version }}
         run: |
-          for package in @aponiajs/common @aponiajs/core @aponiajs/compiler @aponiajs/platform-h3 @aponiajs/platform-hono @aponiajs/platform-elysia @aponiajs/schematics @aponiajs/cli create-aponia @aponiajs/devtools @aponiajs/cron @aponiajs/graphql @aponiajs/cors @aponiajs/testing @aponiajs/openapi @aponiajs/mcp @aponiajs/cache @aponiajs/events @aponiajs/http @aponiajs/rate-limit @aponiajs/security @aponiajs/session @aponiajs/compression @aponiajs/auth @aponiajs/queue @aponiajs/database @aponiajs/microservices @aponiajs/serverless @aponiajs/nitro @aponiajs/view @aponiajs/config @aponiajs/cqrs @aponiajs/mapped-types @aponiajs/serve-static @aponiajs/terminus; do
+          for package in @aponiajs/common @aponiajs/core @aponiajs/compiler @aponiajs/platform-h3 @aponiajs/platform-hono @aponiajs/platform-elysia @aponiajs/schematics @aponiajs/cli create-aponia @aponiajs/devtools @aponiajs/cron @aponiajs/graphql @aponiajs/cors @aponiajs/testing @aponiajs/openapi @aponiajs/mcp @aponiajs/cache @aponiajs/events @aponiajs/http @aponiajs/rate-limit @aponiajs/security @aponiajs/session @aponiajs/compression @aponiajs/auth @aponiajs/queue @aponiajs/database @aponiajs/microservices @aponiajs/serverless @aponiajs/nitro @aponiajs/view @aponiajs/config @aponiajs/cqrs @aponiajs/mapped-types @aponiajs/serve-static @aponiajs/terminus @aponiajs/metrics @aponiajs/opentelemetry @aponiajs/idempotency @aponiajs/redis; do
             for alias in $ALIAS_TAGS; do
               npm dist-tag add "$package@$VERSION" "$alias"
             done

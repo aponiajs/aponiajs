@@ -21,6 +21,12 @@ export {
 } from "./http.module-definition.ts";
 export { HttpClient, HttpService } from "./http-client.service.ts";
 export { InjectHttpClient } from "./inject-http-client.decorator.ts";
+export { BulkheadLimiter, type BulkheadOptions } from "./resilience/bulkhead.ts";
+export {
+  OriginCircuitBreaker,
+  type CircuitBreakerOptions,
+  type CircuitState,
+} from "./resilience/circuit-breaker.ts";
 export type {
   HttpHandler,
   HttpClientFactoryOptions,

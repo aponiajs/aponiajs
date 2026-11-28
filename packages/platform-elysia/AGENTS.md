@@ -96,6 +96,13 @@ owns it.
   would miss it for the same reason. Nothing about an entry reaches
   `compileRootModule`, inspection, or a generated artifact, so it is never a
   substitute for a module registration a module could have made.
+- **No second route table, container, or guard pipeline** — except `fastDispatch`
+  (`default: true`): eligible static routes dispatch through `@aponiajs/core`'s
+  `compileStaticDispatchTable` in `AponiaApplication.handle` when no native plugins,
+  middleware, HTTP policies, request hooks, versioning, request context, static
+  assets, callback controllers, WebSocket gateways, or `configureNative` are active
+  (`fastDispatch: false` opts out). The root `Elysia` instance also defaults
+  `abortSignal` to `false` unless overridden in `options.elysia`.
 - The `ALL` method mounts through Elysia's `all()`, not `route("ALL", ...)`:
   Elysia's type accepts the string but its router answers `404` for it.
   `routing/native-route.ts` owns that mapping, and `route-uniqueness.ts`

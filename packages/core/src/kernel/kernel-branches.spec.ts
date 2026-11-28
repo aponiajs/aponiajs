@@ -78,7 +78,7 @@ function createHttpKernel(options: HttpKernelOptions) {
       if (options.middleware === undefined) {
         return await run(ctx);
       }
-      const result = await options.middleware(ctx, () => run(ctx));
+      const result = await options.middleware(ctx, () => Promise.resolve(run(ctx)));
       return result instanceof Response ? result : buildResponse(result, set, request.method);
     },
   };

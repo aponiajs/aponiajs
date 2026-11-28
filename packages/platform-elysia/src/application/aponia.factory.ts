@@ -63,24 +63,31 @@ export class AponiaFactory {
     rootModule: AponiaRootModule,
     options: AponiaApplicationOptions | ConfiguredAponiaApplicationOptions<AnyElysia> = {},
   ): Promise<AponiaApplication<AnyElysia>> {
-    const { nativeApplication, logger, releaseRequest } = await bootstrapAponiaApplication(
-      rootModule,
-      options,
-    );
-    return new AponiaApplication(nativeApplication, logger, releaseRequest, {
-      rootModule,
-      options,
-      reboot: async (rebootOptions) => {
-        const rebound = await bootstrapAponiaApplication(rootModule, rebootOptions);
-        return {
-          nativeApplication: rebound.nativeApplication,
-          logger: rebound.logger,
-          ...(rebound.releaseRequest === undefined
-            ? {}
-            : { releaseRequest: rebound.releaseRequest }),
-        };
+    const { nativeApplication, logger, releaseRequest, staticDispatch } =
+      await bootstrapAponiaApplication(rootModule, options);
+    return new AponiaApplication(
+      nativeApplication,
+      logger,
+      releaseRequest,
+      {
+        rootModule,
+        options,
+        reboot: async (rebootOptions) => {
+          const rebound = await bootstrapAponiaApplication(rootModule, rebootOptions);
+          return {
+            nativeApplication: rebound.nativeApplication,
+            logger: rebound.logger,
+            ...(rebound.releaseRequest === undefined
+              ? {}
+              : { releaseRequest: rebound.releaseRequest }),
+            ...(rebound.staticDispatch === undefined
+              ? {}
+              : { staticDispatch: rebound.staticDispatch }),
+          };
+        },
       },
-    });
+      staticDispatch,
+    );
   }
 
   /**

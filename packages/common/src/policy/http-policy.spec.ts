@@ -277,4 +277,20 @@ describe("http policy branches", () => {
     );
     expect(response.headers.get("content-encoding")).toBeNull();
   });
+
+  test("falls back to cloning immutable response headers and skips 1xx statuses", async () => {
+    const policies = resolved({ securityHeaders: true });
+    const redirect = await applyHttpPolicies(
+      new Request("http://localhost/"),
+      Response.redirect("https://example.com/next", 302),
+      policies,
+    );
+    expect(redirect.status).toBe(302);
+    expect(redirect.headers.get("x-content-type-options")).toBe("nosniff");
+
+    const upgrade = { status: 101, headers: new Headers() } as Response;
+    expect(await applyHttpPolicies(new Request("http://localhost/"), upgrade, policies)).toBe(
+      upgrade,
+    );
+  });
 });

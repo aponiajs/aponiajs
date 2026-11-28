@@ -182,6 +182,201 @@ export function resolveMiddlewareInstance(
  * Each middleware receives the platform context and a `next` callback; the
  * returned value is what the route pipeline continues with.
  */
+/** Pre-compiled path matcher for one middleware rule. */
+type CompiledPathMatcher = (pathname: string) => boolean;
+
+interface CompiledMiddlewareRule {
+  readonly method: string | undefined;
+  readonly matchPath: CompiledPathMatcher;
+}
+
+/** Pre-compiled middleware configuration avoiding per-request reflection and path splitting. */
+export interface CompiledMiddlewareConfig {
+  readonly middleware: readonly AponiaMiddleware[];
+  readonly targets: readonly CompiledMiddlewareRule[];
+  readonly excluded: readonly CompiledMiddlewareRule[];
+}
+
+function compilePathMatcher(pattern: string): CompiledPathMatcher {
+  const normalizedPattern = normalizeMiddlewarePath(pattern);
+  if (normalizedPattern === "/*" || normalizedPattern === "*") {
+    return () => true;
+  }
+  if (normalizedPattern.endsWith("/*")) {
+    const base = normalizedPattern.slice(0, -2);
+    const prefixSlash = `${base}/`;
+    return (pathname) => {
+      const p = normalizeMiddlewarePath(pathname);
+      return p === base || p.startsWith(prefixSlash);
+    };
+  }
+  if (!normalizedPattern.includes(":") && !normalizedPattern.includes("*")) {
+    const prefixSlash = `${normalizedPattern}/`;
+    return (pathname) => {
+      const p = normalizeMiddlewarePath(pathname);
+      return p === normalizedPattern || p.startsWith(prefixSlash);
+    };
+  }
+
+  const patternSegments = normalizedPattern.split("/").filter(Boolean);
+  const exactPrefixSlash = `${normalizedPattern}/`;
+  return (pathname) => {
+    const normalizedPath = normalizeMiddlewarePath(pathname);
+    if (normalizedPath === normalizedPattern || normalizedPath.startsWith(exactPrefixSlash)) {
+      return true;
+    }
+    const pathSegments = normalizedPath.split("/").filter(Boolean);
+    if (patternSegments.length !== pathSegments.length) {
+      return false;
+    }
+    for (let i = 0; i < patternSegments.length; i += 1) {
+      const seg = patternSegments[i]!;
+      if (seg.startsWith(":") || seg === "*") {
+        continue;
+      }
+      if (seg !== pathSegments[i]) {
+        return false;
+      }
+    }
+    return true;
+  };
+}
+
+function compileTargetRule(target: RouteTarget): CompiledMiddlewareRule {
+  if (typeof target === "string") {
+    return { method: undefined, matchPath: compilePathMatcher(target) };
+  }
+  if (typeof target === "function") {
+    const metadata = getControllerMetadata(target as ClassToken<unknown>);
+    if (metadata?.path === undefined) {
+      return { method: undefined, matchPath: () => false };
+    }
+    return metadata.path === "" || metadata.path === "/"
+      ? { method: undefined, matchPath: () => true }
+      : { method: undefined, matchPath: compilePathMatcher(metadata.path) };
+  }
+  if (typeof target === "object" && target !== null && "path" in target) {
+    const descriptor = target as { readonly path: string; readonly method?: RequestMethod };
+    return {
+      method: descriptor.method?.toUpperCase(),
+      matchPath: compilePathMatcher(descriptor.path),
+    };
+  }
+  return { method: undefined, matchPath: () => false };
+}
+
+function compileExcludedRule(
+  item: string | { readonly path: string; readonly method?: RequestMethod },
+): CompiledMiddlewareRule {
+  if (typeof item === "string") {
+    return { method: undefined, matchPath: compilePathMatcher(item) };
+  }
+  return {
+    method: item.method?.toUpperCase(),
+    matchPath: compilePathMatcher(item.path),
+  };
+}
+
+function matchesCompiledRule(
+  rule: CompiledMiddlewareRule,
+  pathname: string,
+  upperMethod: string,
+): boolean {
+  if (rule.method !== undefined && rule.method !== upperMethod) {
+    return false;
+  }
+  return rule.matchPath(pathname);
+}
+
+/**
+ * Compiles middleware configs once at boot so request matching never reads
+ * `reflect-metadata` or re-splits static patterns.
+ *
+ * @internal
+ */
+export function compileMiddlewareConfigs(
+  configs: readonly {
+    readonly middleware: readonly unknown[];
+    readonly targets: readonly RouteTarget[];
+    readonly excluded: readonly (
+      | string
+      | { readonly path: string; readonly method?: RequestMethod }
+    )[];
+  }[],
+): readonly CompiledMiddlewareConfig[] {
+  return Object.freeze(
+    configs.map((entry) =>
+      Object.freeze({
+        middleware: entry.middleware as readonly AponiaMiddleware[],
+        targets: Object.freeze(entry.targets.map(compileTargetRule)),
+        excluded: Object.freeze(entry.excluded.map(compileExcludedRule)),
+      }),
+    ),
+  );
+}
+
+/**
+ * Executes a pre-compiled middleware configuration list against one request.
+ *
+ * @internal
+ */
+export async function runCompiledMiddlewareChain(
+  configs: readonly CompiledMiddlewareConfig[],
+  context: object,
+  pathname: string,
+  method: string,
+  next: () => Promise<unknown>,
+): Promise<unknown> {
+  const upperMethod = method.toUpperCase();
+  let chain: AponiaMiddleware[] | undefined;
+
+  for (let i = 0; i < configs.length; i += 1) {
+    const entry = configs[i]!;
+    let excluded = false;
+    for (let j = 0; j < entry.excluded.length; j += 1) {
+      if (matchesCompiledRule(entry.excluded[j]!, pathname, upperMethod)) {
+        excluded = true;
+        break;
+      }
+    }
+    if (excluded) {
+      continue;
+    }
+
+    let matched = false;
+    for (let j = 0; j < entry.targets.length; j += 1) {
+      if (matchesCompiledRule(entry.targets[j]!, pathname, upperMethod)) {
+        matched = true;
+        break;
+      }
+    }
+    if (matched) {
+      chain ??= [];
+      chain.push(...entry.middleware);
+    }
+  }
+
+  if (chain === undefined || chain.length === 0) {
+    return await next();
+  }
+
+  let index = 0;
+  const run = async (): Promise<unknown> => {
+    if (index >= chain.length) {
+      return await next();
+    }
+    const current = chain[index++]!;
+    return await current.use(context as never, run);
+  };
+  return await run();
+}
+
+/**
+ * Runs the middleware configurations that match one request.
+ *
+ * Each middleware receives the platform context and a `next` callback; the
+ * returned value is what the route pipeline continues with.
+ */
 export async function runMiddlewareChain(
   configs: readonly {
     readonly middleware: readonly unknown[];
@@ -196,28 +391,13 @@ export async function runMiddlewareChain(
   method: string,
   next: () => Promise<unknown>,
 ): Promise<unknown> {
-  const chain: AponiaMiddleware[] = [];
-  for (const entry of configs) {
-    if (isMiddlewareRouteExcluded(entry.excluded, pathname, method)) {
-      continue;
-    }
-    if (entry.targets.some((target) => matchesMiddlewareTarget(target, pathname, method))) {
-      chain.push(...(entry.middleware as readonly AponiaMiddleware[]));
-    }
-  }
-  if (chain.length === 0) {
-    return await next();
-  }
-
-  let index = 0;
-  const run = async (): Promise<unknown> => {
-    if (index >= chain.length) {
-      return await next();
-    }
-    const current = chain[index++];
-    return await current.use(context as never, run);
-  };
-  return await run();
+  return await runCompiledMiddlewareChain(
+    compileMiddlewareConfigs(configs),
+    context,
+    pathname,
+    method,
+    next,
+  );
 }
 
 /**

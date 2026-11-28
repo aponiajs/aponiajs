@@ -60,6 +60,10 @@ it.
 | `@aponiajs/mapped-types`    | Complete | `PartialType`, `PickType`, `OmitType`, and `IntersectionType`                    |
 | `@aponiajs/serve-static`    | Complete | `ServeStaticModule` static file and SPA fallback serving                         |
 | `@aponiajs/terminus`        | Complete | `TerminusModule`, `HealthCheckService`, HTTP, memory, and disk health indicators |
+| `@aponiajs/metrics`         | Complete | Zero-dep Prometheus exposition, HTTP latency histograms, and runtime gauges      |
+| `@aponiajs/opentelemetry`   | Complete | `@opentelemetry/api` tracing, W3C `traceparent` propagation, and server spans    |
+| `@aponiajs/idempotency`     | Complete | `Idempotency-Key` deduplication, `409` conflict guard, and response replay       |
+| `@aponiajs/redis`           | Complete | Distributed Redis stores for cache, rate-limit, session, auth, idempotency, cron |
 
 ## Known gaps
 
@@ -68,9 +72,9 @@ it.
   Bus transports, and the framework never provisions their topics, queues, or
   subscriptions. A SQLite outbox table ships as `SqliteOutboxStore`; draining it
   into a broker is the application's relay, not the queue's.
-- Distributed revocation, refresh, session, rate-limit, and cache
-  stores are application-supplied; the
-  built-in default stores remain process-local.
+- Distributed revocation, refresh, session, rate-limit, cache, idempotency, and
+  cron lock stores are provided by `@aponiajs/redis` (opt-in); the built-in
+  default stores remain process-local.
 - MVC adapters for Express or Fastify are not provided; Elysia is the default
   HTTP platform, and Hono, H3, and Nitro are first-class platforms beside it.
 - WebSocket transport extraction is not part of this release: gateways run on

@@ -1,13 +1,26 @@
 import { describe, expect, test } from "bun:test";
 import {
+  Body,
+  Context,
   Controller,
+  Cookie,
   createParamDecorator,
   Get,
+  Headers,
+  HostParam,
+  Ip,
   Module,
+  Param,
   ParseIntPipe,
+  Post,
+  Query,
+  Req,
+  ResponseSettings,
   type PipeTransform,
+  type ResponseSettingsState,
   type RouteContext,
 } from "@aponiajs/common";
+import { status } from "elysia";
 import { AponiaFactory } from "./index.ts";
 
 interface RequestUser {
@@ -152,5 +165,166 @@ describe("Custom parameter decorators in @aponiajs/platform-elysia", () => {
     expect(response.status).toBe(200);
     const body = (await response.json()) as { id: number; type: string };
     expect(body).toEqual({ id: 123, type: "number" });
+  });
+
+  test("combines custom parameter with all standard parameter sources", async () => {
+    @Controller("mixed-custom")
+    class MixedCustomController {
+      @Post(":id")
+      mixed(
+        @CurrentUser("name") userName: string,
+        @Body() body: unknown,
+        @Query("q") q: string,
+        @Param("id") id: string,
+        @Headers("x-a") xa: string,
+        @Cookie("c") c: string,
+        @HostParam() host: string,
+        @Ip() ip: string | undefined,
+        @Req() req: Request,
+        @ResponseSettings() set: ResponseSettingsState,
+        @Context() ctx: RouteContext,
+      ) {
+        set.headers["x-mixed"] = "ok";
+        return {
+          userName,
+          body,
+          q,
+          id,
+          xa,
+          c,
+          host,
+          hasIp: ip !== undefined,
+          method: req.method,
+          hasCtx: ctx.request === req,
+        };
+      }
+    }
+
+    @Module({ controllers: [MixedCustomController] })
+    class MixedCustomModule {}
+
+    const app = await AponiaFactory.create(MixedCustomModule, {
+      logger: false,
+      configureNative: (elysia) =>
+        elysia.derive(() => ({
+          user: { id: 1, name: "Alice", role: "admin" },
+        })),
+    });
+
+    const response = await app.handle(
+      new Request("http://example.com/mixed-custom/42?q=hi", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-a": "hdr",
+          cookie: "c=val",
+        },
+        body: JSON.stringify({ ok: true }),
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-mixed")).toBe("ok");
+    expect(await response.json()).toEqual({
+      userName: "Alice",
+      body: { ok: true },
+      q: "hi",
+      id: "42",
+      xa: "hdr",
+      c: "val",
+      host: "example.com",
+      hasIp: false,
+      method: "POST",
+      hasCtx: true,
+    });
+
+    @Controller("fast-status")
+    class FastStatusController {
+      @Get("json")
+      jsonStatus(): string {
+        throw status(418, { teapot: true });
+      }
+      @Get("resp")
+      respStatus(): string {
+        throw status(201, new Response("created", { status: 201 }));
+      }
+      @Get("str")
+      strStatus(): string {
+        throw status(418, "teapot");
+      }
+      @Get("err")
+      errStatus(): string {
+        throw new Error("boom");
+      }
+      @Get("multi-pipe")
+      multiPipe(@Query("a", ParseIntPipe) a: number, @Query("b", ParseIntPipe) b: number): number {
+        return a + b;
+      }
+      @Get("multi-pipe-async")
+      async multiPipeAsync(
+        @Query("a", ParseIntPipe) a: number,
+        @Query("b", ParseIntPipe) b: number,
+      ): Promise<number> {
+        return a * b;
+      }
+    }
+    @Module({ controllers: [FastStatusController] })
+    class FastStatusModule {}
+
+    const statusApp = await AponiaFactory.create(FastStatusModule, { logger: false });
+    const r1 = await statusApp.handle(new Request("http://localhost/fast-status/json"));
+    expect(r1.status).toBe(418);
+    const r2 = await statusApp.handle(new Request("http://localhost/fast-status/resp"));
+    expect(r2.status).toBe(201);
+    const r3 = await statusApp.handle(new Request("http://localhost/fast-status/str"));
+    expect(r3.status).toBe(418);
+    const r4 = await statusApp.handle(new Request("http://localhost/fast-status/err"));
+    expect(r4.status).toBe(500);
+    const r5 = await statusApp.handle(
+      new Request("http://localhost/fast-status/multi-pipe?a=3&b=4"),
+    );
+    expect(await r5.json()).toBe(7);
+    const r6 = await statusApp.handle(
+      new Request("http://localhost/fast-status/multi-pipe-async?a=3&b=4"),
+    );
+    expect(await r6.json()).toBe(12);
+
+    // Sparse piped param (index 1 without index 0) + async pipe in sync handler
+    @Controller("sparse-pipe")
+    class SparsePipeController {
+      @Get()
+      sparse(
+        unannotated: unknown,
+        @Query("n", { transform: async (v: unknown) => Number(v) + 1 }) n: number,
+      ): number {
+        return unannotated === undefined ? n : 0;
+      }
+    }
+    @Module({ controllers: [SparsePipeController] })
+    class SparsePipeModule {}
+    const sparseApp = await AponiaFactory.create(SparsePipeModule, { logger: false });
+    const r7 = await sparseApp.handle(new Request("http://localhost/sparse-pipe?n=9"));
+    expect(await r7.json()).toBe(10);
+
+    @Controller("piped-strip")
+    class PipedStripController {
+      @Get()
+      readAll(
+        @Headers() hdrs: Record<string, unknown>,
+        @Headers("__proto__") proto: unknown,
+      ): { hasHdr: boolean; protoUndefined: boolean } {
+        return {
+          hasHdr: typeof hdrs === "object" && hdrs !== null,
+          protoUndefined: proto === undefined,
+        };
+      }
+    }
+    @Module({ controllers: [PipedStripController] })
+    class PipedStripModule {}
+    const stripApp = await AponiaFactory.create(PipedStripModule, {
+      logger: false,
+      pipes: [{ transform: (v: unknown) => v }],
+    });
+    const r8 = await stripApp.handle(new Request("http://localhost/piped-strip"));
+    expect(await r8.json()).toEqual({ hasHdr: true, protoUndefined: true });
   });
 });

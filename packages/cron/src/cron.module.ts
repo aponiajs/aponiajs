@@ -71,8 +71,14 @@ export class CronModule extends ConfigurableModuleClass {
       providers: Object.freeze([
         ...(definition.providers ?? []),
         provideConfiguration(configuration, source === undefined ? undefined : { source }),
-        provideFactory(CronScheduler, [configuration], (value) =>
-          new CronScheduler(readCronJobs(value, configuration)).start(),
+        provideFactory(
+          CronScheduler,
+          [configuration, MODULE_OPTIONS_TOKEN],
+          (value, moduleOptions: CronModuleOptions) =>
+            new CronScheduler(readCronJobs(value, configuration), {
+              lockStore: moduleOptions.lockStore,
+              lockTtlMs: moduleOptions.lockTtlMs,
+            }).start(),
         ),
         provideValue(SCHEDULE_TIMER, systemScheduleTimer),
         provideClass(SchedulerRegistry, [SCHEDULE_TIMER]),

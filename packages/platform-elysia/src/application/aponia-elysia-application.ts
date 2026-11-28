@@ -18,7 +18,7 @@ import {
   mergeApplicationSurfaceOptions,
   type AponiaApplicationSurfaceConfig,
 } from "@aponiajs/common";
-import { readApplicationShutdown } from "@aponiajs/core";
+import { readApplicationShutdown, type StaticDispatchTable } from "@aponiajs/core";
 import { installShutdownSignalHandlers } from "./shutdown-signals.ts";
 
 /**
@@ -33,6 +33,7 @@ export type ApplicationReboot = (options: AponiaApplicationOptions) => Promise<{
   readonly nativeApplication: AnyElysia;
   readonly logger: LoggerService | undefined;
   readonly releaseRequest?: (request: Request) => void;
+  readonly staticDispatch?: StaticDispatchTable;
 }>;
 
 /** What the wrapper needs from the factory to rebuild itself after `create`. */
@@ -60,6 +61,7 @@ export class AponiaApplication<TNativeApplication extends AnyElysia = Elysia> {
   #nativeApplication: TNativeApplication;
   #logger: LoggerService | undefined;
   #releaseRequest: ((request: Request) => void) | undefined;
+  #staticDispatch: StaticDispatchTable | undefined;
   readonly #boot: AponiaApplicationBoot | undefined;
   readonly #surface: AponiaApplicationSurfaceConfig = createApplicationSurfaceConfig();
   #applied = false;
@@ -78,11 +80,13 @@ export class AponiaApplication<TNativeApplication extends AnyElysia = Elysia> {
     logger: LoggerService | undefined,
     releaseRequest?: (request: Request) => void,
     boot?: AponiaApplicationBoot,
+    staticDispatch?: StaticDispatchTable,
   ) {
     this.#nativeApplication = nativeApplication;
     this.#logger = logger;
     this.#releaseRequest = releaseRequest;
     this.#boot = boot;
+    this.#staticDispatch = staticDispatch;
   }
 
   /**
@@ -305,6 +309,7 @@ export class AponiaApplication<TNativeApplication extends AnyElysia = Elysia> {
     this.#nativeApplication = rebound.nativeApplication as TNativeApplication;
     this.#logger = rebound.logger;
     this.#releaseRequest = rebound.releaseRequest;
+    this.#staticDispatch = rebound.staticDispatch;
     this.#applied = true;
     // A new native instance means the stop signals belong to the old one.
     this.#shutdownSignalsInstalled = false;
@@ -323,11 +328,25 @@ export class AponiaApplication<TNativeApplication extends AnyElysia = Elysia> {
    * ```
    */
   handle(request: Request): Response | Promise<Response> {
-    const result = this.#nativeApplication.handle(request);
+    if (this.#staticDispatch !== undefined) {
+      const fast = this.#staticDispatch.dispatch(request);
+      if (fast !== undefined) {
+        return fast;
+      }
+    }
+    const nativeApp = this.#nativeApplication as {
+      fetch?: (request: Request) => Response | Promise<Response>;
+      handle: (request: Request) => Response | Promise<Response>;
+    };
+    const result =
+      typeof nativeApp.fetch === "function" ? nativeApp.fetch(request) : nativeApp.handle(request);
+    if (this.#releaseRequest === undefined) {
+      return result;
+    }
     if (typeof (result as Promise<Response>).then === "function") {
       return (result as Promise<Response>).finally(() => this.#releaseRequest?.(request));
     }
-    this.#releaseRequest?.(request);
+    this.#releaseRequest(request);
     return result;
   }
 

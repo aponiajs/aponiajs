@@ -32,6 +32,8 @@ export interface MountedRoute {
   readonly filters: readonly ResolvedFilter[];
   /** Route-level pipes, controller pipes first. */
   readonly pipes: readonly ResolvedPipe[];
+  /** Optional boot-computed bitmask of context slots read by this route. */
+  readonly contextMask?: number;
 }
 
 /** What the host knows about the request that a `Request` does not state. */

@@ -2,7 +2,8 @@ import { isStandardSchema, isValidatorSchema } from "../routing/route-schema.ts"
 import { resolveRouteValidator } from "../routing/validation.ts";
 import { type RouteSchemaSlot } from "../interfaces/route-schema.interface.ts";
 import { type RouteValidatorInput } from "../interfaces/validation.interface.ts";
-import { Convert, Parse, ParseError } from "typebox/value";
+import { Compile, type Validator } from "typebox/compile";
+import { Convert } from "typebox/value";
 import { HttpError } from "../exceptions/http-error.ts";
 
 /** One slot refusal: where the request failed and why. */
@@ -15,13 +16,112 @@ export interface ValidationIssue {
   readonly message: string;
 }
 
+/** A pre-compiled slot validator that runs synchronously unless a Standard Schema returns a Promise. */
+export type CompiledSlotValidator = (value: unknown) => unknown;
+
+function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
+  return (
+    value !== null &&
+    (typeof value === "object" || typeof value === "function") &&
+    typeof (value as { then?: unknown }).then === "function"
+  );
+}
+
+function unwrapStandardResult(
+  result: {
+    readonly issues?: readonly { readonly path?: readonly unknown[]; readonly message: string }[];
+    readonly value?: unknown;
+  },
+  slot: RouteSchemaSlot,
+): unknown {
+  if ("issues" in result && result.issues !== undefined) {
+    throw validationFailure(
+      slot,
+      result.issues.map((issue) => ({
+        slot,
+        path: issue.path === undefined ? "" : issue.path.map(String).join("."),
+        message: issue.message,
+      })),
+    );
+  }
+  return result.value;
+}
+
+/**
+ * Compiles one slot's validator once at boot so request dispatch avoids
+ * per-request metadata unwrapping, interpreted TypeBox parsing, and `async`
+ * allocation on synchronous validators.
+ *
+ * @internal
+ */
+export function compileSlotValidator(
+  validator: RouteValidatorInput | undefined,
+  slot: RouteSchemaSlot,
+  coerce: boolean,
+): CompiledSlotValidator | undefined {
+  if (validator === undefined) {
+    return undefined;
+  }
+
+  const resolved = resolveRouteValidator(validator);
+
+  if (isStandardSchema(resolved)) {
+    const standard = resolved["~standard"];
+    return (value: unknown): unknown => {
+      const result = standard.validate(value);
+      if (isPromiseLike(result)) {
+        return result.then((settled) =>
+          unwrapStandardResult(
+            settled as {
+              readonly issues?: readonly {
+                readonly path?: readonly unknown[];
+                readonly message: string;
+              }[];
+              readonly value?: unknown;
+            },
+            slot,
+          ),
+        );
+      }
+      return unwrapStandardResult(
+        result as {
+          readonly issues?: readonly {
+            readonly path?: readonly unknown[];
+            readonly message: string;
+          }[];
+          readonly value?: unknown;
+        },
+        slot,
+      );
+    };
+  }
+
+  if (isValidatorSchema(resolved)) {
+    const compiled = Compile(resolved as never) as Validator;
+    return (value: unknown): unknown => {
+      // `Convert` mutates what it is handed, and decoded query/params/headers are frozen.
+      const input =
+        coerce && typeof value === "object" && value !== null ? structuredClone(value) : value;
+      const candidate = coerce ? Convert(resolved as never, input) : input;
+      if (compiled.Check(candidate)) {
+        return compiled.Decode(candidate);
+      }
+      throw validationFailure(
+        slot,
+        compiled.Errors(candidate).map((issue) => ({
+          slot,
+          path: issue.instancePath,
+          message: issue.message,
+        })),
+      );
+    };
+  }
+
+  return undefined;
+}
+
 /**
  * Runs one slot's validator over a decoded value.
- *
- * A Standard Schema validator is called through its `~standard` hook; a
- * platform-native validator is parsed with TypeBox's interpreted API, so no
- * function is compiled from the schema at run time. A coerce flag applies to
- * query, path, header, and cookie values, which arrive as strings.
  *
  * @param validator - The declared validator, or `undefined` for an open slot.
  * @param value - The decoded request value.
@@ -36,52 +136,11 @@ export async function validateSlot(
   slot: RouteSchemaSlot,
   coerce: boolean,
 ): Promise<unknown> {
-  if (validator === undefined) {
+  const compiled = compileSlotValidator(validator, slot, coerce);
+  if (compiled === undefined) {
     return value;
   }
-
-  const resolved = resolveRouteValidator(validator);
-
-  if (isStandardSchema(resolved)) {
-    const result = await resolved["~standard"].validate(value);
-    if ("issues" in result && result.issues !== undefined) {
-      throw validationFailure(
-        slot,
-        result.issues.map((issue) => ({
-          slot,
-          path: issue.path === undefined ? "" : issue.path.map(String).join("."),
-          message: issue.message,
-        })),
-      );
-    }
-    return result.value;
-  }
-
-  if (isValidatorSchema(resolved)) {
-    // `Convert` mutates what it is handed, and the decoded slots are frozen.
-    const input =
-      coerce && typeof value === "object" && value !== null ? structuredClone(value) : value;
-    const candidate = coerce ? Convert(resolved as never, input) : input;
-    try {
-      return Parse(resolved as never, candidate);
-    } catch (error) {
-      if (error instanceof ParseError) {
-        throw validationFailure(
-          slot,
-          error.cause.errors.map((issue) => ({
-            slot,
-            path: issue.instancePath,
-            message: issue.message,
-          })),
-        );
-      }
-      throw error;
-    }
-  }
-
-  // A raw validator this framework does not recognize is left to the platform's
-  // own lowering; the kernel cannot run it.
-  return value;
+  return await compiled(value);
 }
 
 function validationFailure(slot: RouteSchemaSlot, issues: readonly ValidationIssue[]): HttpError {

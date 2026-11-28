@@ -42,6 +42,10 @@ dependency order:
 33. `@aponiajs/mapped-types`
 34. `@aponiajs/serve-static`
 35. `@aponiajs/terminus`
+36. `@aponiajs/metrics`
+37. `@aponiajs/opentelemetry`
+38. `@aponiajs/idempotency`
+39. `@aponiajs/redis`
 
 The `aponiajs` facade remains private until it exports the public framework API.
 

@@ -38,6 +38,10 @@ export const versionedPackageFiles = [
   "packages/mapped-types/package.json",
   "packages/serve-static/package.json",
   "packages/terminus/package.json",
+  "packages/metrics/package.json",
+  "packages/opentelemetry/package.json",
+  "packages/idempotency/package.json",
+  "packages/redis/package.json",
 ] as const;
 
 export const versionedWorkspacePaths = [
@@ -59,10 +63,13 @@ export const versionedWorkspacePaths = [
   "packages/events",
   "packages/graphql",
   "packages/http",
+  "packages/idempotency",
   "packages/mapped-types",
   "packages/mcp",
+  "packages/metrics",
   "packages/microservices",
   "packages/nitro",
+  "packages/opentelemetry",
   "packages/serverless",
   "packages/openapi",
   "packages/platform-elysia",
@@ -70,6 +77,7 @@ export const versionedWorkspacePaths = [
   "packages/platform-hono",
   "packages/queue",
   "packages/rate-limit",
+  "packages/redis",
   "packages/schematics",
   "packages/security",
   "packages/serve-static",

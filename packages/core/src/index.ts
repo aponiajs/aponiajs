@@ -69,15 +69,19 @@ export { StaticRouteExecutionContext } from "./enhancers/static-execution-contex
 export { createMiddlewareConsumer } from "./middleware/middleware-consumer.ts";
 export {
   collectModuleMiddleware,
+  compileMiddlewareConfigs,
   isMiddlewareRouteExcluded,
   matchesMiddlewarePath,
   matchesMiddlewareTarget,
   normalizeMiddlewarePath,
   resolveMiddlewareInstance,
+  runCompiledMiddlewareChain,
   runMiddlewareChain,
 } from "./middleware/route-matching.ts";
+export type { CompiledMiddlewareConfig } from "./middleware/route-matching.ts";
 export {
   executePipes,
+  executePipesSyncOrAsync,
   resolveApplicationPipe,
   resolveApplicationPipes,
   resolvePipe,
@@ -89,13 +93,24 @@ export {
   resolveGlobal,
 } from "./application/bootstrap.resolver.ts";
 
-export { buildArguments, readParameterValue } from "./kernel/parameter-binding.ts";
+export {
+  buildArguments,
+  buildCompiledArguments,
+  compileParameterPlan,
+  readParameterValue,
+} from "./kernel/parameter-binding.ts";
+export type { CompiledArgumentPlan, CompiledParameterStep } from "./kernel/parameter-binding.ts";
 export {
   createRouteExecutionRuntime,
   createRouteHandler,
   executeMountedRoute,
 } from "./routing/route-handler.ts";
 export type { RouteExecutionRuntime } from "./routing/route-handler.ts";
+export { compileStaticDispatchTable } from "./routing/static-dispatch.ts";
+export type {
+  StaticDispatchCompileOptions,
+  StaticDispatchTable,
+} from "./routing/static-dispatch.ts";
 export {
   APPLICATION_CONTAINER,
   attachApplicationContainer,

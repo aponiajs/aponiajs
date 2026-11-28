@@ -14,6 +14,32 @@ import { statusCodeOf } from "../exceptions/http-status-map.ts";
  * @param method - The request method, so a `HEAD` answer carries no body.
  * @returns The response to send.
  */
+/**
+ * Returns `true` when `headers` contains at least one defined header entry,
+ * avoiding `Object.entries` array allocation on empty response settings.
+ *
+ * @internal
+ */
+export function hasResponseHeaderEntries(
+  headers: Record<string, string | number | string[] | undefined>,
+): boolean {
+  for (const name in headers) {
+    if (Object.hasOwn(headers, name) && headers[name] !== undefined) {
+      return true;
+    }
+  }
+  return false;
+}
+
+const textPlainInit200 = { headers: { "content-type": "text/plain; charset=utf-8" } };
+const headJsonInit200 = {
+  status: 200,
+  headers: { "content-type": "application/json; charset=utf-8" },
+};
+
+/**
+ * Builds the `Response` for a route handler return value using the accumulated response settings.
+ */
 export function buildResponse(
   value: unknown,
   set: ResponseSettingsState,
@@ -21,6 +47,41 @@ export function buildResponse(
 ): Response {
   if (value instanceof Response) {
     return value;
+  }
+
+  const status = resolveStatus(set.status);
+  if (!hasResponseHeaderEntries(set.headers)) {
+    const statusInit = status === 200 ? undefined : { status };
+    if (value === undefined || value === null) {
+      return new Response(null, statusInit);
+    }
+    if (
+      value instanceof Uint8Array ||
+      value instanceof ArrayBuffer ||
+      value instanceof Blob ||
+      value instanceof ReadableStream
+    ) {
+      return new Response(value, statusInit);
+    }
+    if (typeof value === "string") {
+      if (method === "HEAD") {
+        return new Response(null, {
+          status,
+          headers: textPlainInit200.headers,
+        });
+      }
+      return new Response(
+        value,
+        status === 200 ? textPlainInit200 : { status, headers: textPlainInit200.headers },
+      );
+    }
+    if (method === "HEAD") {
+      return new Response(
+        null,
+        status === 200 ? headJsonInit200 : { status, headers: headJsonInit200.headers },
+      );
+    }
+    return Response.json(value, statusInit);
   }
 
   const headers = new Headers();
@@ -37,7 +98,6 @@ export function buildResponse(
     headers.set(name, String(entry));
   }
 
-  const status = resolveStatus(set.status);
   if (value === undefined || value === null) {
     return new Response(null, { status, headers });
   }

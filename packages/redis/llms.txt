@@ -1,0 +1,13 @@
+# @aponiajs/redis
+
+> Redis client lifecycle and distributed store implementations for `@aponiajs/cache`, `@aponiajs/rate-limit`, `@aponiajs/session`, `@aponiajs/auth`, `@aponiajs/idempotency`, and `@aponiajs/cron`.
+
+## What this package exports
+
+- `RedisModule.forRoot(options)` and `RedisModule.forRootAsync(options)`
+- `RedisService`: `client`, `ping()`, `cacheStore()`, `rateLimitStore()`, `sessionStore()`, `refreshTokenStore()`, `revocationStore()`, `idempotencyStore()`, `cronLockStore()`
+- `RedisCacheStore`, `RedisRateLimitStore`, `RedisSessionStore`, `RedisRefreshTokenStore`, `RedisRevocationStore`, `RedisIdempotencyStore`, `RedisCronLockStore`
+
+## Documentation
+
+- [Published packages](../../docs/reference/packages.md)

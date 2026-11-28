@@ -503,6 +503,21 @@
         "zod": "^4.6.6",
       },
     },
+    "packages/idempotency": {
+      "name": "@aponiajs/idempotency",
+      "version": "1.0.0-beta.64",
+      "dependencies": {
+        "@aponiajs/common": "workspace:*",
+      },
+      "devDependencies": {
+        "@aponiajs/core": "workspace:*",
+        "@aponiajs/platform-elysia": "workspace:*",
+        "@aponiajs/platform-h3": "workspace:*",
+        "@aponiajs/platform-hono": "workspace:*",
+        "@aponiajs/testing": "workspace:*",
+        "elysia": "2.0.0-rc.4",
+      },
+    },
     "packages/mapped-types": {
       "name": "@aponiajs/mapped-types",
       "version": "1.0.0-beta.64",
@@ -544,6 +559,21 @@
         "h3",
         "hono",
       ],
+    },
+    "packages/metrics": {
+      "name": "@aponiajs/metrics",
+      "version": "1.0.0-beta.64",
+      "dependencies": {
+        "@aponiajs/common": "workspace:*",
+      },
+      "devDependencies": {
+        "@aponiajs/core": "workspace:*",
+        "@aponiajs/platform-elysia": "workspace:*",
+        "@aponiajs/platform-h3": "workspace:*",
+        "@aponiajs/platform-hono": "workspace:*",
+        "@aponiajs/testing": "workspace:*",
+        "elysia": "2.0.0-rc.4",
+      },
     },
     "packages/microservices": {
       "name": "@aponiajs/microservices",
@@ -620,6 +650,22 @@
         "@aponiajs/serverless": "workspace:*",
         "elysia": "2.0.0-rc.4",
         "zod": "^4.6.6",
+      },
+    },
+    "packages/opentelemetry": {
+      "name": "@aponiajs/opentelemetry",
+      "version": "1.0.0-beta.64",
+      "dependencies": {
+        "@aponiajs/common": "workspace:*",
+        "@opentelemetry/api": "^1.9.0",
+      },
+      "devDependencies": {
+        "@aponiajs/core": "workspace:*",
+        "@aponiajs/platform-elysia": "workspace:*",
+        "@aponiajs/platform-h3": "workspace:*",
+        "@aponiajs/platform-hono": "workspace:*",
+        "@aponiajs/testing": "workspace:*",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "packages/platform-elysia": {
@@ -702,6 +748,32 @@
         "@aponiajs/testing": "workspace:*",
         "elysia": "2.0.0-rc.4",
       },
+    },
+    "packages/redis": {
+      "name": "@aponiajs/redis",
+      "version": "1.0.0-beta.64",
+      "dependencies": {
+        "@aponiajs/common": "workspace:*",
+      },
+      "devDependencies": {
+        "@aponiajs/auth": "workspace:*",
+        "@aponiajs/cache": "workspace:*",
+        "@aponiajs/core": "workspace:*",
+        "@aponiajs/cron": "workspace:*",
+        "@aponiajs/idempotency": "workspace:*",
+        "@aponiajs/platform-elysia": "workspace:*",
+        "@aponiajs/rate-limit": "workspace:*",
+        "@aponiajs/session": "workspace:*",
+        "@aponiajs/testing": "workspace:*",
+        "elysia": "2.0.0-rc.4",
+        "redis": "6.3.1",
+      },
+      "peerDependencies": {
+        "redis": "6.3.1",
+      },
+      "optionalPeers": [
+        "redis",
+      ],
     },
     "packages/schematics": {
       "name": "@aponiajs/schematics",
@@ -893,15 +965,21 @@
 
     "@aponiajs/http": ["@aponiajs/http@workspace:packages/http"],
 
+    "@aponiajs/idempotency": ["@aponiajs/idempotency@workspace:packages/idempotency"],
+
     "@aponiajs/mapped-types": ["@aponiajs/mapped-types@workspace:packages/mapped-types"],
 
     "@aponiajs/mcp": ["@aponiajs/mcp@workspace:packages/mcp"],
+
+    "@aponiajs/metrics": ["@aponiajs/metrics@workspace:packages/metrics"],
 
     "@aponiajs/microservices": ["@aponiajs/microservices@workspace:packages/microservices"],
 
     "@aponiajs/nitro": ["@aponiajs/nitro@workspace:packages/nitro"],
 
     "@aponiajs/openapi": ["@aponiajs/openapi@workspace:packages/openapi"],
+
+    "@aponiajs/opentelemetry": ["@aponiajs/opentelemetry@workspace:packages/opentelemetry"],
 
     "@aponiajs/platform-elysia": ["@aponiajs/platform-elysia@workspace:packages/platform-elysia"],
 
@@ -912,6 +990,8 @@
     "@aponiajs/queue": ["@aponiajs/queue@workspace:packages/queue"],
 
     "@aponiajs/rate-limit": ["@aponiajs/rate-limit@workspace:packages/rate-limit"],
+
+    "@aponiajs/redis": ["@aponiajs/redis@workspace:packages/redis"],
 
     "@aponiajs/schematics": ["@aponiajs/schematics@workspace:packages/schematics"],
 

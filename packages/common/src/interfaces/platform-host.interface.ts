@@ -20,7 +20,7 @@ export interface PlatformMountOptions {
 }
 
 /** Answers one mounted route on a platform's own router. */
-export type PlatformRouteHandler = (context: PlatformRouteContext) => Promise<Response>;
+export type PlatformRouteHandler = (context: PlatformRouteContext) => Response | Promise<Response>;
 
 /**
  * Wraps one request around the runtime's own dispatch.
@@ -32,7 +32,7 @@ export type PlatformRouteHandler = (context: PlatformRouteContext) => Promise<Re
 export type RequestPipeline = (
   request: Request,
   next: (request: Request) => Response | Promise<Response>,
-) => Promise<Response>;
+) => Response | Promise<Response>;
 
 /** What a host must state to serve the graph through its runtime. */
 export interface PlatformHost<TApplication, _TNative = unknown> {
@@ -84,6 +84,9 @@ export interface PlatformHost<TApplication, _TNative = unknown> {
     application: TApplication,
     port: number,
     pipeline?: RequestPipeline,
+    staticRoutes?: Readonly<
+      Record<string, Response | ((request: Request) => Response | Promise<Response>)>
+    >,
   ): Promise<{
     readonly url: string;
     /** The runtime's server object, when the runtime states one. */

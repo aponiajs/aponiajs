@@ -137,15 +137,59 @@ export function resolvePipe(pipe: PipeType, container?: AponiaContainer): Resolv
  * @param metadata - Argument location and type metadata.
  * @returns The transformed output.
  */
+/**
+ * Executes a pipeline of pipes synchronously when every pipe returns a
+ * synchronous value, switching to a Promise chain only when a pipe returns a
+ * thenable.
+ *
+ * @internal
+ */
+export function executePipesSyncOrAsync(
+  pipes: readonly ResolvedPipe[],
+  initialValue: unknown,
+  metadata: ArgumentMetadata,
+): unknown {
+  let current = initialValue;
+  for (let i = 0; i < pipes.length; i++) {
+    const result = pipes[i]!.instance.transform(current, metadata);
+    if (
+      result !== null &&
+      (typeof result === "object" || typeof result === "function") &&
+      typeof (result as PromiseLike<unknown>).then === "function"
+    ) {
+      return continuePipesAsync(pipes, i + 1, result as PromiseLike<unknown>, metadata);
+    }
+    current = result;
+  }
+  return current;
+}
+
+async function continuePipesAsync(
+  pipes: readonly ResolvedPipe[],
+  startIndex: number,
+  pending: PromiseLike<unknown>,
+  metadata: ArgumentMetadata,
+): Promise<unknown> {
+  let current = await pending;
+  for (let i = startIndex; i < pipes.length; i++) {
+    const result = pipes[i]!.instance.transform(current, metadata);
+    current =
+      result !== null &&
+      (typeof result === "object" || typeof result === "function") &&
+      typeof (result as PromiseLike<unknown>).then === "function"
+        ? await (result as PromiseLike<unknown>)
+        : result;
+  }
+  return current;
+}
+
+/**
+ * Executes a sequence of resolved pipes asynchronously on an input value.
+ */
 export async function executePipes(
   pipes: readonly ResolvedPipe[],
   initialValue: unknown,
   metadata: ArgumentMetadata,
 ): Promise<unknown> {
-  let current = initialValue;
-  for (let i = 0; i < pipes.length; i++) {
-    const result = pipes[i]!.instance.transform(current, metadata);
-    current = typeof (result as Promise<unknown>)?.then === "function" ? await result : result;
-  }
-  return current;
+  return await executePipesSyncOrAsync(pipes, initialValue, metadata);
 }

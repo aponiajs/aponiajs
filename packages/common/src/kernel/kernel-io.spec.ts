@@ -2,10 +2,13 @@ import { describe, expect, test } from "bun:test";
 import {
   HttpError,
   buildResponse,
+  createRequestPipeline,
   readBody,
   readCookies,
   readHeaders,
   readQuery,
+  resolveApplicationHttpPolicies,
+  slicePathname,
 } from "../index.ts";
 import type { ResponseSettingsState } from "../index.ts";
 
@@ -276,5 +279,162 @@ describe("buildResponse", () => {
     expect(response.headers.get("x-multi")).toBe("a, b");
     expect(response.headers.get("x-skip")).toBeNull();
     expect(response.headers.get("x-one")).toBe("1");
+  });
+
+  test("readBody handles multi-chunk text streams and rejects oversized streams", async () => {
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream<Uint8Array>({
+      start(ctrl) {
+        ctrl.enqueue(encoder.encode("hello "));
+        ctrl.enqueue(encoder.encode("world"));
+        ctrl.close();
+      },
+    });
+    const chunkedReq = new Request("http://localhost/chunked", {
+      method: "POST",
+      headers: { "content-type": "text/plain" },
+      body: stream,
+    });
+    expect(await readBody(chunkedReq, 1024)).toBe("hello world");
+
+    const tooLargeStream = new ReadableStream<Uint8Array>({
+      start(ctrl) {
+        ctrl.enqueue(encoder.encode("123456"));
+        ctrl.enqueue(encoder.encode("7890"));
+        ctrl.close();
+      },
+    });
+    const largeReq = new Request("http://localhost/large", {
+      method: "POST",
+      headers: { "content-type": "text/plain" },
+      body: tooLargeStream,
+    });
+    let rejected = false;
+    try {
+      await readBody(largeReq, 5);
+    } catch {
+      rejected = true;
+    }
+    expect(rejected).toBe(true);
+  });
+
+  test("createRequestPipeline applies sync cors and securityHeaders policies", async () => {
+    const policies = resolveApplicationHttpPolicies({
+      cors: { origin: "https://app.example", credentials: true },
+      securityHeaders: true,
+    });
+    const pipeline = createRequestPipeline({ policies })!;
+    const req = new Request("http://localhost/api", {
+      headers: { origin: "https://app.example" },
+    });
+    const res = await pipeline(req, () => new Response("ok"));
+    expect(res.headers.get("access-control-allow-origin")).toBe("https://app.example");
+    expect(res.headers.get("x-content-type-options")).toBe("nosniff");
+
+    // Immutable response headers trigger clone fallback in withHeaders.
+    const redirectRes = await pipeline(req, () => {
+      const immutableRes = new Response("ok");
+      Object.defineProperty(immutableRes.headers, "set", {
+        value: () => {
+          throw new TypeError("immutable");
+        },
+      });
+      return immutableRes;
+    });
+    expect(redirectRes.status).toBe(200);
+    expect(redirectRes.headers.get("x-content-type-options")).toBe("nosniff");
+  });
+
+  test("slicePathname and readBody handle no-slash URL, null/empty stream, and 2nd-chunk overflow", async () => {
+    expect(slicePathname("http://localhost")).toBe("/");
+    expect(
+      await readBody(new Request("http://localhost/null", { method: "POST" }), 100),
+    ).toBeUndefined();
+    const emptyStream = new ReadableStream<Uint8Array>({
+      start(ctrl) {
+        ctrl.close();
+      },
+    });
+    expect(
+      await readBody(
+        new Request("http://localhost/empty-stream", {
+          method: "POST",
+          headers: { "content-type": "text/plain" },
+          body: emptyStream,
+        }),
+        100,
+      ),
+    ).toBe("");
+
+    const encoder = new TextEncoder();
+    const twoChunkOverflow = new ReadableStream<Uint8Array>({
+      start(ctrl) {
+        ctrl.enqueue(encoder.encode("aa"));
+        ctrl.enqueue(encoder.encode("bbbbbb"));
+        ctrl.close();
+      },
+    });
+    let twoRejected = false;
+    try {
+      await readBody(
+        new Request("http://localhost/2chunks", {
+          method: "POST",
+          headers: { "content-type": "text/plain" },
+          body: twoChunkOverflow,
+        }),
+        5,
+      );
+    } catch {
+      twoRejected = true;
+    }
+    expect(twoRejected).toBe(true);
+  });
+
+  test("readBody uses content-length fast path and rejects 3-chunk or multi-byte overflow", async () => {
+    const fastReq = new Request("http://localhost/fast-text", {
+      method: "POST",
+      headers: { "content-type": "text/plain", "content-length": "5" },
+      body: "hello",
+    });
+    expect(await readBody(fastReq, 10)).toBe("hello");
+
+    // Multi-byte UTF-8 where declared content-length <= max but actual bytes > max
+    const utf8OverflowReq = new Request("http://localhost/utf8", {
+      method: "POST",
+      headers: { "content-type": "text/plain", "content-length": "4" },
+      body: "ééé",
+    });
+    let utf8Rejected = false;
+    try {
+      await readBody(utf8OverflowReq, 4);
+    } catch {
+      utf8Rejected = true;
+    }
+    expect(utf8Rejected).toBe(true);
+
+    // 3-chunk stream overflowing on 3rd chunk
+    const encoder = new TextEncoder();
+    const threeChunkStream = new ReadableStream<Uint8Array>({
+      start(ctrl) {
+        ctrl.enqueue(encoder.encode("aa"));
+        ctrl.enqueue(encoder.encode("bb"));
+        ctrl.enqueue(encoder.encode("cccccc"));
+        ctrl.close();
+      },
+    });
+    let thirdRejected = false;
+    try {
+      await readBody(
+        new Request("http://localhost/3chunks", {
+          method: "POST",
+          headers: { "content-type": "text/plain" },
+          body: threeChunkStream,
+        }),
+        5,
+      );
+    } catch {
+      thirdRejected = true;
+    }
+    expect(thirdRejected).toBe(true);
   });
 });

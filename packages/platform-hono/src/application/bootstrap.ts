@@ -31,7 +31,11 @@ import {
 import { provideHttpAdapterHost } from "@aponiajs/common";
 import type { PlatformHost, RequestPipeline } from "@aponiajs/common";
 import type { HostRequestInfo, MountedRoute, PlatformRouteContext } from "@aponiajs/common";
-import { createRouteHandler } from "@aponiajs/core";
+import {
+  compileStaticDispatchTable,
+  createRouteHandler,
+  type StaticDispatchTable,
+} from "@aponiajs/core";
 import { resolveApplicationPipe, resolveApplicationPipes, resolvePipe } from "@aponiajs/core";
 import { compileRootModuleAsync, HttpControllerKind, isModuleDefinition } from "@aponiajs/common";
 import type { AponiaRootModule } from "@aponiajs/common";
@@ -111,6 +115,8 @@ export interface BootedHttpApplication<TNative = unknown> {
   readonly pluginPolicies?: readonly HttpPolicy[] | undefined;
   /** The neutral lifecycle hooks the graph's packages contributed. */
   readonly hooks?: readonly RequestLifecycleHook[] | undefined;
+  /** Optional O(1) static route fast-dispatch table. */
+  readonly staticDispatch?: StaticDispatchTable | undefined;
 }
 
 /** Where a listening application keeps the listener its shutdown plan stops. */
@@ -163,6 +169,14 @@ export class AponiaHttpApplication<TNative = unknown> {
   #versionNegotiator: VersionNegotiator | undefined;
   #policies: ResolvedHttpPolicies | undefined;
   #pipeline: RequestPipeline | undefined;
+  #staticDispatch: StaticDispatchTable | undefined;
+  #hostFetch:
+    | ((
+        application: TNative,
+        request: Request,
+        info?: HostRequestInfo,
+      ) => Response | Promise<Response>)
+    | undefined;
   readonly #boot: AponiaHttpApplicationBoot<TNative> | undefined;
   readonly #surface: AponiaApplicationSurfaceConfig = createApplicationSurfaceConfig();
   #applied = false;
@@ -178,6 +192,7 @@ export class AponiaHttpApplication<TNative = unknown> {
     boot?: AponiaHttpApplicationBoot<TNative>,
   ) {
     this.#host = host;
+    this.#hostFetch = host.fetch?.bind(host);
     this.#native = booted.native;
     this.#matchedRequests = booted.matchedRequests;
     this.#container = booted.container;
@@ -187,6 +202,7 @@ export class AponiaHttpApplication<TNative = unknown> {
     this.#logger = logger;
     this.#versionNegotiator = booted.versionNegotiator;
     this.#policies = booted.policies;
+    this.#staticDispatch = booted.staticDispatch;
     this.#boot = boot;
     this.#pipeline = createRequestPipeline({
       negotiator: booted.versionNegotiator,
@@ -197,20 +213,26 @@ export class AponiaHttpApplication<TNative = unknown> {
   }
 
   /** Answers one request through the platform's own router. */
-  async handle(request: Request, info?: HostRequestInfo): Promise<Response> {
-    if (this.#host.fetch === undefined) {
+  handle(request: Request, info?: HostRequestInfo): Response | Promise<Response> {
+    if (this.#hostFetch === undefined) {
       throw new AponiaError(
         "UNSUPPORTED_PLATFORM_FEATURE",
         `The ${this.#host.name} platform does not answer raw requests.`,
         { feature: "handle", platform: this.#host.name },
       );
     }
-    const fetch = this.#host.fetch.bind(this.#host);
-    const dispatch = async (current: Request): Promise<Response> =>
-      await fetch(this.#native, current, info);
-    return this.#pipeline === undefined
-      ? await dispatch(request)
-      : await this.#pipeline(request, dispatch);
+    if (this.#pipeline === undefined) {
+      if (this.#staticDispatch !== undefined && info === undefined) {
+        const fast = this.#staticDispatch.dispatch(request);
+        if (fast !== undefined) {
+          return fast;
+        }
+      }
+      return this.#hostFetch(this.#native, request, info);
+    }
+    return this.#pipeline(request, (current: Request) =>
+      this.#hostFetch!(this.#native, current, info),
+    );
   }
 
   /** Answers a request the platform has a route for, or declines it. */
@@ -474,7 +496,12 @@ export class AponiaHttpApplication<TNative = unknown> {
         { feature: "listen", platform: this.#host.name },
       );
     }
-    this.#listener.current = await this.#host.listen(this.#native, port, this.#pipeline);
+    this.#listener.current = await this.#host.listen(
+      this.#native,
+      port,
+      this.#pipeline,
+      this.#staticDispatch?.bunRoutes,
+    );
     if (
       (options.shutdownSignals === true || this.#shutdownSignalsRequested) &&
       !this.#signalsInstalled
@@ -558,6 +585,8 @@ export class AponiaHttpApplication<TNative = unknown> {
     this.#versionNegotiator = next.#versionNegotiator;
     this.#policies = next.#policies;
     this.#pipeline = next.#pipeline;
+    this.#staticDispatch = next.#staticDispatch;
+    this.#hostFetch = next.#hostFetch;
     this.#closed = false;
     this.#signalsInstalled = false;
   }
@@ -839,7 +868,7 @@ export function createBootstrapFactory<TNative>(host: PlatformHost<TNative, unkn
                 (name, value) => {
                   context.set.headers[name] = value;
                 },
-                () => base(context),
+                () => Promise.resolve(base(context)),
               );
       host.mountRoute(configured, mount, handler, mountOptions);
     }
@@ -954,6 +983,17 @@ export function createBootstrapFactory<TNative>(host: PlatformHost<TNative, unkn
       ...(options.compression === undefined ? {} : { compression: options.compression }),
     });
     const pluginPolicies = resolveHttpPolicies(container);
+    const staticDispatch = compileStaticDispatchTable(routes, {
+      enabled: options.fastDispatch,
+      hasMiddleware: getConfigs().length > 0 || options.middleware !== undefined,
+      hasHttpPolicies: policies !== undefined || pluginPolicies.length > 0,
+      hasRequestHooks: requestHooks.length > 0,
+      hasVersioning: versionNegotiator !== undefined,
+      hasRequestContext: requestContext !== undefined,
+      hasStaticAssets: options.staticAssets !== undefined,
+      globalPipesCount: globalPipes.length,
+      logger: logger as LoggerService | undefined,
+    });
     diagnosticsRef.current = Object.freeze({
       framework: null,
       graph: isModuleDefinition(rootModule) ? "declared" : "decorated",
@@ -980,6 +1020,7 @@ export function createBootstrapFactory<TNative>(host: PlatformHost<TNative, unkn
       policies,
       pluginPolicies,
       hooks: requestHooks,
+      staticDispatch,
     };
     return new AponiaHttpApplication(host, booted, logger, {
       options,

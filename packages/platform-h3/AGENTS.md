@@ -39,8 +39,13 @@ and imports the shared request contract from `@aponiajs/platform-core`.
   methods record their state and `init()` re-runs the boot through this host;
   `getHttpServer()` is the `Bun.serve` object `listen` bound, and is `undefined`
   before `listen`. A delivery adapter keeps its narrower documented surface.
-- **No platform depends on another.** This package names only `common`,
-  `core`, and `platform-core`; `scripts/platform-independence.spec.ts` holds it.
+- **No platform depends on another.** This package names only `common` and
+  `core`; `scripts/platform-independence.spec.ts` holds it.
+- **`fastDispatch` (`O(1)` static dispatch).** By default (`fastDispatch !== false`),
+  eligible static routes (no path parameters, middleware, HTTP policies, request
+  hooks, versioning, request context, static assets, global pipes, or route
+  enhancers beyond zero-argument guards) dispatch through `compileStaticDispatchTable`
+  and `Bun.serve({ routes })`, falling back to H3's router for all other requests.
 - **`listen` is Bun's server.** The runtime this repository targets is Bun; a
   listener outside it is not emulated.
 - **A peer, never a bundled dependency.** An application that never mounts this

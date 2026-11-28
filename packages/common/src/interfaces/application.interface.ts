@@ -58,6 +58,8 @@ export interface AponiaHttpApplicationOptions {
   readonly cors?: CorsOptions | boolean;
   /** Security headers; `true` selects the framework defaults. */
   readonly securityHeaders?: SecurityHeadersOptions | boolean;
+  /** Enables O(1) static fast-dispatch when no plugins, middleware, or policies interfere (`true` by default when eligible). */
+  readonly fastDispatch?: boolean;
   /** Entity tags and `304` answers; `true` emits a weak tag. */
   readonly etag?: EtagOptions | boolean;
   /** Response compression; `true` selects the defaults. */

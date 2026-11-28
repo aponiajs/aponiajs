@@ -2,7 +2,6 @@ import { AponiaError, formatLogValue, type LoggerService } from "@aponiajs/commo
 import { ElysiaStatus } from "elysia";
 import type { ResolvedFilter } from "../controllers/enhancer.resolver.ts";
 import type { ElysiaErrorHook } from "../interfaces/route-compiler.interface.ts";
-import { httpErrors } from "@aponiajs/common";
 
 /**
  * What an unhandled failure answers with.
@@ -12,6 +11,32 @@ import { httpErrors } from "@aponiajs/common";
  * log, not for whoever sent the request.
  */
 const unhandledFailureDetail = "The server could not complete this request.";
+
+const STATIC_500_BODY = JSON.stringify({
+  type: "about:blank",
+  title: "Internal Server Error",
+  status: 500,
+  detail: unhandledFailureDetail,
+  code: "INTERNAL_SERVER_ERROR",
+});
+
+const PROBLEM_500_INIT = {
+  status: 500,
+  headers: { "content-type": "application/problem+json" },
+} as const;
+
+const STATIC_401_REFRESH_BODY = JSON.stringify({
+  type: "about:blank",
+  title: "Unauthorized",
+  status: 401,
+  detail: "The refresh token is invalid or expired.",
+  code: "UNAUTHORIZED",
+});
+
+const PROBLEM_401_INIT = {
+  status: 401,
+  headers: { "content-type": "application/problem+json" },
+} as const;
 
 /**
  * Whether one resolved filter answers one thrown value.
@@ -97,7 +122,7 @@ export function createDefaultExceptionFilter(
     // return value is the client's answer — see `reportThroughLogger`.
     recordMappedException(mappedExceptions, request, error);
     reportThroughLogger(logger, error, "ExceptionsHandler");
-    return httpErrors.internalServerError(unhandledFailureDetail).toResponse();
+    return new Response(STATIC_500_BODY, PROBLEM_500_INIT);
   };
 }
 
@@ -115,7 +140,7 @@ function mappedAponiaErrorResponse(error: unknown): Response | undefined {
   }
   switch (error.code) {
     case "INVALID_REFRESH_TOKEN":
-      return httpErrors.unauthorized("The refresh token is invalid or expired.").toResponse();
+      return new Response(STATIC_401_REFRESH_BODY, PROBLEM_401_INIT);
     default:
       return undefined;
   }

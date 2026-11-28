@@ -1,4 +1,5 @@
 import type { ConfigurationToken } from "@aponiajs/common";
+import type { CronLockStore } from "./cron-lock-store.interface.ts";
 import type { CronConfiguration } from "./cron-scheduler.interface.ts";
 
 /**
@@ -48,4 +49,8 @@ export interface CronModuleOptions {
   readonly intervals?: boolean;
   /** Whether `@Timeout` methods mount; defaults to true. */
   readonly timeouts?: boolean;
+  /** Optional distributed lock store for multi-instance cron deduplication. */
+  readonly lockStore?: CronLockStore;
+  /** Lock TTL in milliseconds when `lockStore` is configured; defaults to `30_000`. */
+  readonly lockTtlMs?: number;
 }

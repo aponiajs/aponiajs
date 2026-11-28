@@ -1,6 +1,13 @@
 import { AponiaError, type ConfigurationToken, type OnApplicationShutdown } from "@aponiajs/common";
 import { Cron } from "croner";
+import type { CronLockStore } from "../interfaces/cron-lock-store.interface.ts";
 import type { CronConfiguration, CronJob } from "../interfaces/cron-scheduler.interface.ts";
+
+/** Optional lock configuration for {@link CronScheduler}. */
+export interface CronSchedulerLockOptions {
+  readonly lockStore?: CronLockStore;
+  readonly lockTtlMs?: number;
+}
 
 /**
  * The jobs one boot schedules, and the switch that ends them.
@@ -25,9 +32,13 @@ import type { CronConfiguration, CronJob } from "../interfaces/cron-scheduler.in
 export class CronScheduler implements OnApplicationShutdown {
   readonly #jobs: readonly CronJob[];
   readonly #handles: Record<string, Cron> = Object.create(null);
+  readonly #lockStore: CronLockStore | undefined;
+  readonly #lockTtlMs: number;
 
-  constructor(jobs: readonly CronJob[]) {
+  constructor(jobs: readonly CronJob[], lockOptions: CronSchedulerLockOptions = {}) {
     this.#jobs = jobs;
+    this.#lockStore = lockOptions.lockStore;
+    this.#lockTtlMs = lockOptions.lockTtlMs ?? 30_000;
   }
 
   /**
@@ -68,7 +79,23 @@ export class CronScheduler implements OnApplicationShutdown {
         pattern: job.pattern,
         options: job.options ?? {},
       });
-      this.#handles[job.name] = new Cron(job.pattern, { ...job.options }, () => job.run(context));
+      const lockStore = this.#lockStore;
+      const lockTtlMs = this.#lockTtlMs;
+      const runJob =
+        lockStore === undefined
+          ? () => job.run(context)
+          : async () => {
+              const handle = await lockStore.acquire(`cron:${job.name}`, lockTtlMs);
+              if (handle === undefined) {
+                return;
+              }
+              try {
+                await job.run(context);
+              } finally {
+                await handle.release();
+              }
+            };
+      this.#handles[job.name] = new Cron(job.pattern, { ...job.options }, runJob);
     }
 
     return this;

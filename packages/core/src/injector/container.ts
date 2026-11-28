@@ -45,6 +45,8 @@ export type RequestContextAccessor = () => object | undefined;
  */
 export type RequestContextGuard = (context: object) => boolean;
 
+const UNSET_SLOT = Symbol("aponia.unset-request-slot");
+
 /**
  * The dependency injection container: one cached instance per provider per
  * module, resolved through the compiled module graph.
@@ -58,9 +60,12 @@ export class AponiaContainer {
 
   // Cache of singleton provider instances scoped per ModuleDefinition
   readonly #instances = new Map<ModuleDefinition, Map<Provider, unknown>>();
+  readonly #rootSingletons = new Map<Token<unknown>, unknown>();
   readonly #controllers = new Map<ModuleDefinition, Map<ControllerDefinition, unknown>>();
   readonly #resolving: ProviderLocation[] = [];
-  readonly #requestInstances = new WeakMap<object, Map<ModuleDefinition, Map<Provider, unknown>>>();
+  readonly #requestSlotIds = new Map<ModuleDefinition, Map<Provider, number>>();
+  readonly #requestSlotValues = new WeakMap<object, unknown[]>();
+  #nextRequestSlotId = 0;
   readonly #requestControllers = new WeakMap<
     object,
     Map<ModuleDefinition, Map<ControllerDefinition, unknown>>
@@ -171,6 +176,9 @@ export class AponiaContainer {
    * ```
    */
   get<T>(token: Token<T>, context?: object): T {
+    if (context === undefined && this.#rootSingletons.has(token)) {
+      return this.#rootSingletons.get(token) as T;
+    }
     this.#assertNotApplicationEnhancerToken(token);
     if (token === ModuleRef) {
       return new ContainerModuleRef(this, this.graph.root) as T;
@@ -179,7 +187,14 @@ export class AponiaContainer {
       return this.#resolveContextToken(token, context ?? this.#contextAccessor?.()) as T;
     }
     const location = this.graph.locate(this.graph.root, token);
-    return this.#resolve(location, context) as T;
+    const instance = this.#resolve(location, context) as T;
+    if (
+      context === undefined &&
+      this.providerScope(location.module, location.provider) === "singleton"
+    ) {
+      this.#rootSingletons.set(token, instance);
+    }
+    return instance;
   }
 
   /**
@@ -449,12 +464,10 @@ export class AponiaContainer {
       this.#assertContextOpen(activeContext, location.module, location.provider.provide);
       cacheContext = this.#durableContext(activeContext, location.provider);
 
-      const contextModules = this.#requestInstances.get(cacheContext);
-      if (contextModules) {
-        const moduleInstances = contextModules.get(location.module);
-        if (moduleInstances?.has(location.provider)) {
-          return moduleInstances.get(location.provider);
-        }
+      const slotId = this.#getRequestSlotId(location.module, location.provider);
+      const slots = this.#requestSlotValues.get(cacheContext);
+      if (slots !== undefined && slotId < slots.length && slots[slotId] !== UNSET_SLOT) {
+        return slots[slotId];
       }
     } else if (scope !== "transient") {
       const moduleInstances = this.#instances.get(location.module);
@@ -474,17 +487,16 @@ export class AponiaContainer {
       assertSynchronous(instance, location.provider);
 
       if (scope === "request") {
-        let contextModules = this.#requestInstances.get(cacheContext!);
-        if (!contextModules) {
-          contextModules = new Map();
-          this.#requestInstances.set(cacheContext!, contextModules);
+        const slotId = this.#getRequestSlotId(location.module, location.provider);
+        let slots = this.#requestSlotValues.get(cacheContext!);
+        if (slots === undefined) {
+          slots = [];
+          this.#requestSlotValues.set(cacheContext!, slots);
         }
-        let moduleInstances = contextModules.get(location.module);
-        if (!moduleInstances) {
-          moduleInstances = new Map();
-          contextModules.set(location.module, moduleInstances);
+        while (slots.length <= slotId) {
+          slots.push(UNSET_SLOT);
         }
-        moduleInstances.set(location.provider, instance);
+        slots[slotId] = instance;
       } else if (scope !== "transient") {
         this.#moduleCache(this.#instances, location.module).set(location.provider, instance);
       }
@@ -680,6 +692,22 @@ export class AponiaContainer {
       throw missingRequestContext("INQUIRER");
     }
     return this.#createForwardRefProxy(current, context);
+  }
+
+  /** Assigns a dense integer slot index for flat request-scoped array caching. */
+  #getRequestSlotId(module: ModuleDefinition, provider: Provider): number {
+    let moduleSlots = this.#requestSlotIds.get(module);
+    if (moduleSlots === undefined) {
+      moduleSlots = new Map();
+      this.#requestSlotIds.set(module, moduleSlots);
+    }
+    let slotId = moduleSlots.get(provider);
+    if (slotId === undefined) {
+      slotId = this.#nextRequestSlotId;
+      this.#nextRequestSlotId += 1;
+      moduleSlots.set(provider, slotId);
+    }
+    return slotId;
   }
 
   /** Refuses reading an `APP_*` pseudo-provider as if it had one instance. */

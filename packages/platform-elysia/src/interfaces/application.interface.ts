@@ -32,7 +32,7 @@ export type ElysiaConfigurator<TNativeApplication extends AnyElysia> = (
 
 /** The Elysia route-compilation policy the boot passes through. */
 export type RouteCompilationOptions = Readonly<
-  Pick<ElysiaConfig<undefined, EventScope>, "precompile">
+  Pick<ElysiaConfig<undefined, EventScope>, "precompile" | "abortSignal">
 >;
 
 /** The options `AponiaFactory.create` boots with: logging, plugins, enhancers, artifacts, and Elysia policy. */
@@ -41,6 +41,11 @@ export interface AponiaApplicationOptions {
   readonly logger?: false | LoggerService | readonly LogLevel[];
   /** Refuses to boot when a compiled route has no generated invoker. */
   readonly strictCodegen?: boolean;
+  /**
+   * Enables O(1) static route fast-dispatch when eligible (default `true`).
+   * Set to `false` to route every request through Elysia's native pipeline.
+   */
+  readonly fastDispatch?: boolean;
   /**
    * A path prefix every compiled controller route mounts under.
    *

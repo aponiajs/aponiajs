@@ -5,8 +5,10 @@ import {
   NOOP_LOGGER,
   Reflector,
   VIEW_ENGINE,
+  getDeprecationMetadata,
   getMessagePatternMetadata,
   getTokenName,
+  joinPaths,
   notifySystemLogger,
   provideClass,
   provideValue,
@@ -14,10 +16,17 @@ import {
   type EnhancerMetadata,
   type LoggerService,
   type MiddlewareConsumer,
+  type MountedRoute,
   type Token,
   type ViewEngine,
 } from "@aponiajs/common";
-import { createContainer } from "@aponiajs/core";
+import {
+  compileStaticDispatchTable,
+  createContainer,
+  resolveApplicationPipe,
+  resolveApplicationPipes,
+  resolvePipe,
+} from "@aponiajs/core";
 import { Elysia, type AnyElysia } from "elysia";
 import { websocket } from "elysia/websocket";
 import {
@@ -45,7 +54,6 @@ import { mountMiddleware } from "../middleware/middleware-pipeline.ts";
 import { compileModuleInMemoryAsync } from "../compiler/in-memory-compiler.ts";
 import { normalizeRoutePrefix } from "@aponiajs/common";
 import { provideHttpAdapterHost, type ResolvedPipe } from "@aponiajs/common";
-import { resolveApplicationPipe, resolveApplicationPipes } from "@aponiajs/core";
 import { isModuleDefinition } from "../modules/module-compiler.ts";
 import type { AponiaRootModule } from "@aponiajs/common";
 import { selectRootModuleDescriptor } from "@aponiajs/common";
@@ -61,6 +69,7 @@ import type {
   RouteViewRenderer,
 } from "../interfaces/route-compiler.interface.ts";
 import { registerCompiledElysiaRoutes } from "../routing/route-compiler.ts";
+import { expectsContextArgument } from "../routing/route-handler-compiler.ts";
 import {
   compileWebSocketGateways,
   registerWebSocketGateways,
@@ -158,6 +167,7 @@ export async function bootstrapAponiaApplication(
   // first provider: `configureNative` must return the instance it receives, so
   // the identity this publishes is the one every request reaches.
   const baseApplication = new Elysia({
+    abortSignal: false,
     ...options.elysia,
     name: compiledRootModule.id,
   });
@@ -311,25 +321,34 @@ export async function bootstrapAponiaApplication(
   // it here still reaches every request.
   const requestLifecycleHooks = resolveRequestLifecycleHooks(container);
   const recordMatchedRoutes = requestLifecycleHooks.length > 0;
+  const applicationHttpPolicies = resolveApplicationHttpPolicies({
+    ...(options.cors === undefined ? {} : { cors: options.cors }),
+    ...(options.securityHeaders === undefined ? {} : { securityHeaders: options.securityHeaders }),
+    ...(options.etag === undefined ? {} : { etag: options.etag }),
+    ...(options.compression === undefined ? {} : { compression: options.compression }),
+  });
+  const pluginHttpPolicies = resolveHttpPolicies(container);
   installHttpPolicies(nativeApplication, {
-    policies: resolveApplicationHttpPolicies({
-      ...(options.cors === undefined ? {} : { cors: options.cors }),
-      ...(options.securityHeaders === undefined
-        ? {}
-        : { securityHeaders: options.securityHeaders }),
-      ...(options.etag === undefined ? {} : { etag: options.etag }),
-      ...(options.compression === undefined ? {} : { compression: options.compression }),
-    }),
-    pluginPolicies: resolveHttpPolicies(container),
+    policies: applicationHttpPolicies,
+    pluginPolicies: pluginHttpPolicies,
     hooks: requestLifecycleHooks,
   });
 
   // Every package's declared platform is checked before the first mount, and
   // the selected native mount runs before middleware and controllers, exactly
   // where a plugin module's `use()` used to.
+  const routesBeforePlatformModules = nativeApplication.routes.length;
+  const nativeEvents = nativeApplication as unknown as {
+    readonly event?: { readonly request?: readonly unknown[] };
+  };
+  const requestHooksBeforePlatformModules = nativeEvents.event?.request?.length ?? 0;
   await applyPlatformModules(container, nativeApplication, "elysia");
+  const hasPlatformModules =
+    nativeApplication.routes.length > routesBeforePlatformModules ||
+    (nativeEvents.event?.request?.length ?? 0) > requestHooksBeforePlatformModules;
 
-  mountMiddleware(nativeApplication, getMiddlewareConfigs(), container, prefix);
+  const middlewareConfigs = getMiddlewareConfigs();
+  mountMiddleware(nativeApplication, middlewareConfigs, container, prefix);
 
   // The global enhancers are the application's own declaration, so they resolve
   // once, through the root module, rather than per controller: one instance
@@ -400,6 +419,7 @@ export async function bootstrapAponiaApplication(
   // and the token a plan carries never states it.
   const generatedInvokers = new Map<Token<unknown>, ReadonlySet<string | symbol>>();
   const callbackRoutes: AponiaCallbackRouteDiagnostics[] = [];
+  const mountedRoutesForStaticDispatch: MountedRoute[] = [];
   const interceptorHalves = new Map<ClassToken<unknown>, InterceptorPhases>();
   const messageHandlers = createMicroserviceHandlerTable();
   let microserviceRuntime: MicroserviceRuntime | undefined;
@@ -507,8 +527,63 @@ export async function bootstrapAponiaApplication(
         logControllerRoutes(logger, controller, mountedRoutes);
         if (controller.compiledRoutes === undefined) {
           collectCallbackRoutes(callbackRoutes, module.id, controller, mountedRoutes);
-        } else if (generatedKeys !== undefined) {
-          generatedInvokers.set(controller.token, generatedKeys);
+        } else {
+          const controllerDeprecation =
+            controller.useClass === undefined
+              ? undefined
+              : getDeprecationMetadata(controller.useClass);
+          for (const route of controller.compiledRoutes) {
+            if (generatedKeys?.has(route.propertyKey) === true) {
+              continue;
+            }
+            if (route.declaredReturnKind !== "synchronous") {
+              continue;
+            }
+            if (
+              controllerDeprecation !== undefined ||
+              (controller.useClass !== undefined &&
+                getDeprecationMetadata(controller.useClass.prototype, route.propertyKey) !==
+                  undefined)
+            ) {
+              continue;
+            }
+            const callableHandler = (instance as Record<PropertyKey, unknown>)[route.propertyKey];
+            if (
+              typeof callableHandler !== "function" ||
+              expectsContextArgument(
+                callableHandler as (...arguments_: unknown[]) => unknown,
+                route.declaredParameterCount,
+              )
+            ) {
+              continue;
+            }
+            const mountPath = prefix === "" ? route.path : joinPaths(prefix, route.path);
+            const resolvedRouteEnhancers = resolvedEnhancers.forRoute(route.enhancers);
+            mountedRoutesForStaticDispatch.push({
+              route: (mountPath === route.path
+                ? route
+                : Object.freeze({ ...route, path: mountPath })) as unknown as MountedRoute["route"],
+              controller: (controller.useClass ??
+                controller.token) as unknown as MountedRoute["controller"],
+              instance,
+              ...(requestScoped
+                ? { resolveInstance: () => container.instantiateController(module, controller) }
+                : {}),
+              guards: [...globalEnhancers.guards, ...resolvedRouteEnhancers.guards],
+              interceptors: [
+                ...globalEnhancers.interceptors,
+                ...resolvedRouteEnhancers.interceptors,
+              ],
+              filters: [
+                ...resolvedRouteEnhancers.filters,
+                ...globalEnhancers.filters,
+              ] as unknown as MountedRoute["filters"],
+              pipes: [...globalPipes, ...(route.pipes ?? []).map((p) => resolvePipe(p))],
+            });
+          }
+          if (generatedKeys !== undefined) {
+            generatedInvokers.set(controller.token, generatedKeys);
+          }
         }
         continue;
       }
@@ -693,12 +768,58 @@ export async function bootstrapAponiaApplication(
     logger,
   );
 
+  const staticDispatch = compileStaticDispatchTable(mountedRoutesForStaticDispatch, {
+    enabled: options.fastDispatch,
+    hasNativePlugins:
+      hasPlatformModules ||
+      (options.plugins ?? []).some((p) => p !== undefined) ||
+      callbackRoutes.length > 0 ||
+      webSocketGateways.length > 0 ||
+      configureNative !== undefined,
+    hasMiddleware: middlewareConfigs.length > 0,
+    hasHttpPolicies: applicationHttpPolicies !== undefined || pluginHttpPolicies.length > 0,
+    hasRequestHooks: requestLifecycleHooks.length > 0,
+    hasVersioning: options.versioning !== undefined,
+    hasRequestContext: requestContext !== undefined,
+    hasStaticAssets: options.staticAssets !== undefined,
+    globalPipesCount: globalPipes.length,
+    logger,
+    onError: (error, request) => {
+      if (
+        error !== null &&
+        typeof error === "object" &&
+        "status" in error &&
+        "response" in error &&
+        typeof (error as { readonly status: unknown }).status === "number"
+      ) {
+        const statusError = error as unknown as {
+          readonly status: number;
+          readonly response: unknown;
+        };
+        if (statusError.response instanceof Response) {
+          return statusError.response;
+        }
+        return typeof statusError.response === "string"
+          ? new Response(statusError.response, { status: statusError.status })
+          : Response.json(statusError.response, { status: statusError.status });
+      }
+      return exceptionHandling.defaultFilter?.({
+        error,
+        request,
+        set: { headers: {} },
+      } as unknown as Parameters<NonNullable<typeof exceptionHandling.defaultFilter>>[0]) as
+        | Response
+        | undefined;
+    },
+  });
+
   return Object.freeze({
     nativeApplication,
     logger,
     ...(requestContext === undefined
       ? {}
       : { releaseRequest: (request: Request) => requestContext.release(request) }),
+    ...(staticDispatch === undefined ? {} : { staticDispatch }),
   });
 }
 

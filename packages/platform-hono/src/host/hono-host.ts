@@ -2,9 +2,11 @@ import { Hono, type Context } from "hono";
 import {
   answerStaticAsset,
   buildResponse,
+  hasResponseHeaderEntries,
   readCookies,
   readHeaders,
   readQuery,
+  RouteContextMask,
   statusCodeOf,
   stripRoutePrefix,
   type GatewayHooks,
@@ -21,7 +23,7 @@ import {
   type ResolvedMiddlewareConfig,
   type StaticAssetsOptions,
 } from "@aponiajs/common";
-import { runMiddlewareChain } from "@aponiajs/core";
+import { compileMiddlewareConfigs, runCompiledMiddlewareChain } from "@aponiajs/core";
 
 /** The native application this platform creates. */
 export type HonoApplication = Hono;
@@ -81,6 +83,9 @@ export async function loadBunAdapter(
     return {
       support: createBunWebSocket() as unknown as HonoWebSocketSupport,
       peerAddress: (context: Context): string | undefined => {
+        if ((context.env as { readonly server?: unknown } | undefined)?.server === undefined) {
+          return undefined;
+        }
         try {
           return getConnInfo(context).remote.address;
         } catch {
@@ -162,17 +167,20 @@ export function createHonoHost(
       if (configs.length === 0) {
         return;
       }
+      const compiledConfigs = compileMiddlewareConfigs(configs);
+      const prefix = options.prefix ?? "";
+      const store = options.store ?? {};
       application.use("*", async (context, next) => {
-        const prefix = options.prefix ?? "";
         const pathname = stripRoutePrefix(context.req.path, prefix) ?? context.req.path;
-        const middlewareContext = createMiddlewareContext(
+        const middlewareContext = new LazyHonoRouteContext(
           context,
           pathname,
-          options.store ?? {},
+          store,
           adapter,
+          false,
         );
-        const result = await runMiddlewareChain(
-          configs,
+        const result = await runCompiledMiddlewareChain(
+          compiledConfigs,
           middlewareContext,
           pathname,
           context.req.method,
@@ -182,9 +190,13 @@ export function createHonoHost(
           },
         );
         if (result instanceof Response) {
-          return applySettings(result, middlewareContext.set);
+          return middlewareContext.hasMutatedSettings
+            ? applySettings(result, middlewareContext.set)
+            : result;
         }
-        applyHeaders(context, middlewareContext.set.headers);
+        if (middlewareContext.hasMutatedSettings) {
+          applyHeaders(context, middlewareContext.set.headers);
+        }
         return undefined;
       });
     },
@@ -208,6 +220,9 @@ export function createHonoHost(
       application: HonoApplication,
       port: number,
       pipeline?: RequestPipeline,
+      staticRoutes?: Readonly<
+        Record<string, Response | ((request: Request) => Response | Promise<Response>)>
+      >,
     ): Promise<HonoListener> {
       const server = (
         Bun.serve as unknown as (options: Record<string, unknown>) => {
@@ -216,11 +231,15 @@ export function createHonoHost(
         }
       )({
         port,
+        ...(staticRoutes === undefined || pipeline !== undefined ? {} : { routes: staticRoutes }),
         // Hono's Bun adapter resolves the server through the context's `env`;
         // the listener hands it the same instance Bun handed the listener.
         fetch: (request: Request, server: unknown) => {
-          const dispatch = (current: Request) => application.fetch(current, { server } as never);
-          return pipeline === undefined ? dispatch(request) : pipeline(request, dispatch);
+          return pipeline === undefined
+            ? application.fetch(request, { server } as never)
+            : pipeline(request, (current: Request) =>
+                application.fetch(current, { server } as never),
+              );
         },
         ...webSocketConfig(adapter, gatewayOptions),
       });
@@ -270,75 +289,148 @@ export function createHonoHost(
   });
 }
 
+const emptyFrozenParams: Record<string, string> = Object.freeze({});
+
+class LazyHonoRouteContext {
+  body: unknown = undefined;
+  readonly request: Request;
+  readonly path: string;
+  readonly store: Record<string, unknown>;
+  readonly native: Context;
+
+  readonly #adapter: typeof bunAdapter;
+  readonly #hasParams: boolean;
+  #url: URL | undefined;
+  #query: Readonly<Record<string, string | string[]>> | undefined;
+  #params: Record<string, string> | undefined;
+  #headers: Readonly<Record<string, string>> | undefined;
+  #cookie: Readonly<Record<string, { readonly value: string }>> | undefined;
+  #ip: string | undefined | null = null;
+  #set:
+    | {
+        status?: number | string;
+        headers: Record<string, string | number | string[] | undefined>;
+      }
+    | undefined;
+  #server: { readonly requestIP?: () => { readonly address?: string } | undefined } | undefined;
+
+  constructor(
+    native: Context,
+    path: string,
+    store: Record<string, unknown>,
+    adapter: typeof bunAdapter,
+    hasParams: boolean,
+  ) {
+    this.native = native;
+    this.request = native.req.raw;
+    this.path = path;
+    this.store = store;
+    this.#adapter = adapter;
+    this.#hasParams = hasParams;
+  }
+
+  get hasMutatedSettings(): boolean {
+    if (this.#set === undefined) {
+      return false;
+    }
+    return this.#set.status !== undefined || hasResponseHeaderEntries(this.#set.headers);
+  }
+
+  get set(): {
+    status?: number | string;
+    headers: Record<string, string | number | string[] | undefined>;
+  } {
+    return (this.#set ??= { headers: {} });
+  }
+
+  get params(): Record<string, string> {
+    if (this.#params === undefined) {
+      this.#params = this.#hasParams ? { ...this.native.req.param() } : emptyFrozenParams;
+    }
+    return this.#params;
+  }
+
+  set params(value: Record<string, string>) {
+    this.#params = value;
+  }
+
+  get query(): Readonly<Record<string, string | string[]>> {
+    return (this.#query ??= readQuery((this.#url ??= new URL(this.request.url))));
+  }
+
+  set query(value: Readonly<Record<string, string | string[]>>) {
+    this.#query = value;
+  }
+
+  get headers(): Readonly<Record<string, string>> {
+    return (this.#headers ??= readHeaders(this.request));
+  }
+
+  set headers(value: Readonly<Record<string, string>>) {
+    this.#headers = value;
+  }
+
+  get cookie(): Readonly<Record<string, { readonly value: string }>> {
+    return (this.#cookie ??= readCookies(this.request));
+  }
+
+  set cookie(value: Readonly<Record<string, { readonly value: string }>>) {
+    this.#cookie = value;
+  }
+
+  get host(): string {
+    return (this.#url ??= new URL(this.request.url)).host;
+  }
+
+  get ip(): string | undefined {
+    if (this.#ip === null) {
+      this.#ip = this.#adapter?.peerAddress(this.native);
+    }
+    return this.#ip;
+  }
+
+  get server():
+    | { readonly requestIP?: () => { readonly address?: string } | undefined }
+    | undefined {
+    if (this.#server === undefined) {
+      const address = this.ip;
+      if (address !== undefined) {
+        this.#server = { requestIP: () => ({ address }) };
+      }
+    }
+    return this.#server;
+  }
+
+  status = (status: number | string, body?: unknown): Response => {
+    const s = this.set;
+    s.status = status;
+    return buildResponse(body, s, this.native.req.method);
+  };
+}
+
 function createHandler(
   mount: MountedRoute,
   handler: PlatformRouteHandler,
   store: Record<string, unknown>,
   adapter: typeof bunAdapter,
-): (context: Context) => Promise<Response> {
-  return async (context: Context): Promise<Response> => {
-    const routeContext = createRouteContext(context, mount, store, adapter);
-    const response = await handler(routeContext);
-    return applySettings(response, routeContext.set);
+): (context: Context) => Response | Promise<Response> {
+  const path = mount.route.path;
+  const mask = mount.contextMask;
+  const hasParams =
+    mask === undefined
+      ? path.includes(":") || path.includes("*")
+      : (mask & (RouteContextMask.PARAMS | RouteContextMask.FULL_CONTEXT)) !== 0;
+
+  return (context: Context): Response | Promise<Response> => {
+    const routeContext = new LazyHonoRouteContext(context, path, store, adapter, hasParams);
+    const response = handler(routeContext as unknown as PlatformRouteContext);
+    if (response instanceof Response) {
+      return routeContext.hasMutatedSettings ? applySettings(response, routeContext.set) : response;
+    }
+    return response.then((settled) =>
+      routeContext.hasMutatedSettings ? applySettings(settled, routeContext.set) : settled,
+    );
   };
-}
-
-function createRouteContext(
-  context: Context,
-  mount: MountedRoute,
-  store: Record<string, unknown>,
-  adapter: typeof bunAdapter,
-): PlatformRouteContext {
-  return createContextValues(
-    context,
-    mount.route.path,
-    store,
-    { ...context.req.param() },
-    adapter,
-  ) as never;
-}
-
-function createMiddlewareContext(
-  context: Context,
-  pathname: string,
-  store: Record<string, unknown>,
-  adapter: typeof bunAdapter,
-): PlatformRouteContext {
-  return createContextValues(context, pathname, store, {}, adapter);
-}
-
-function createContextValues(
-  context: Context,
-  path: string,
-  store: Record<string, unknown>,
-  params: Record<string, string>,
-  adapter: typeof bunAdapter,
-): PlatformRouteContext {
-  const url = new URL(context.req.url);
-  const set: {
-    status?: number | string;
-    headers: Record<string, string | number | string[] | undefined>;
-  } = { headers: {} };
-  const address = adapter?.peerAddress(context);
-  return {
-    body: undefined,
-    query: readQuery(url),
-    params,
-    headers: readHeaders(context.req.raw),
-    cookie: readCookies(context.req.raw),
-    request: context.req.raw,
-    path,
-    set,
-    store,
-    ip: address,
-    host: url.host,
-    status: (status, body) => {
-      set.status = status;
-      return buildResponse(body, set, context.req.method);
-    },
-    ...(address === undefined ? {} : { server: { requestIP: () => ({ address }) } }),
-    native: context,
-  } as PlatformRouteContext;
 }
 
 function applyHeaders(
@@ -366,19 +458,26 @@ function applySettings(
     readonly headers: Record<string, string | number | string[] | undefined>;
   },
 ): Response {
+  const hasHeaders = hasResponseHeaderEntries(set.headers);
+  if (!hasHeaders && set.status === undefined) {
+    return response;
+  }
+
   const headers = new Headers(response.headers);
-  for (const [name, value] of Object.entries(set.headers)) {
-    if (value === undefined) {
-      continue;
-    }
-    if (Array.isArray(value)) {
-      headers.delete(name);
-      for (const item of value) {
-        headers.append(name, String(item));
+  if (hasHeaders) {
+    for (const [name, value] of Object.entries(set.headers)) {
+      if (value === undefined) {
+        continue;
       }
-      continue;
+      if (Array.isArray(value)) {
+        headers.delete(name);
+        for (const item of value) {
+          headers.append(name, String(item));
+        }
+        continue;
+      }
+      headers.set(name, String(value));
     }
-    headers.set(name, String(value));
   }
 
   const requested =

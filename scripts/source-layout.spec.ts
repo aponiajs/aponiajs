@@ -182,7 +182,7 @@ const packageLayouts: readonly PackageLayout[] = [
       "index.ts",
       "inject-http-client.decorator.ts",
     ],
-    directories: ["interfaces", "security"],
+    directories: ["interfaces", "resilience", "security"],
   },
   {
     sourceRoot: "packages/mcp/src",

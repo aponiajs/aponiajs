@@ -788,6 +788,10 @@
           "kind": "type"
         },
         {
+          "name": "CompiledSlotValidator",
+          "kind": "type"
+        },
+        {
           "name": "compileGatewayPlan",
           "kind": "value"
         },
@@ -805,6 +809,10 @@
         },
         {
           "name": "compileRoutes",
+          "kind": "value"
+        },
+        {
+          "name": "compileSlotValidator",
           "kind": "value"
         },
         {
@@ -1181,6 +1189,10 @@
         },
         {
           "name": "GoneException",
+          "kind": "value"
+        },
+        {
+          "name": "hasResponseHeaderEntries",
           "kind": "value"
         },
         {
@@ -2160,6 +2172,10 @@
           "kind": "type"
         },
         {
+          "name": "RouteContextMask",
+          "kind": "value"
+        },
+        {
           "name": "RouteCookie",
           "kind": "type"
         },
@@ -2288,6 +2304,10 @@
           "kind": "value"
         },
         {
+          "name": "slicePathname",
+          "kind": "value"
+        },
+        {
           "name": "Sse",
           "kind": "value"
         },
@@ -2330,6 +2350,10 @@
         {
           "name": "StreamableFileOptions",
           "kind": "type"
+        },
+        {
+          "name": "stripDangerousKeys",
+          "kind": "value"
         },
         {
           "name": "stripRoutePrefix",
@@ -2824,6 +2848,10 @@
           "kind": "value"
         },
         {
+          "name": "buildCompiledArguments",
+          "kind": "value"
+        },
+        {
           "name": "collectApplicationEnhancerEntries",
           "kind": "value"
         },
@@ -2836,11 +2864,35 @@
           "kind": "value"
         },
         {
+          "name": "CompiledArgumentPlan",
+          "kind": "type"
+        },
+        {
+          "name": "CompiledMiddlewareConfig",
+          "kind": "type"
+        },
+        {
+          "name": "CompiledParameterStep",
+          "kind": "type"
+        },
+        {
           "name": "compileGuardsHook",
           "kind": "value"
         },
         {
+          "name": "compileMiddlewareConfigs",
+          "kind": "value"
+        },
+        {
           "name": "compileModuleGraph",
+          "kind": "value"
+        },
+        {
+          "name": "compileParameterPlan",
+          "kind": "value"
+        },
+        {
+          "name": "compileStaticDispatchTable",
           "kind": "value"
         },
         {
@@ -2901,6 +2953,10 @@
         },
         {
           "name": "executePipes",
+          "kind": "value"
+        },
+        {
+          "name": "executePipesSyncOrAsync",
           "kind": "value"
         },
         {
@@ -3072,8 +3128,20 @@
           "kind": "type"
         },
         {
+          "name": "runCompiledMiddlewareChain",
+          "kind": "value"
+        },
+        {
           "name": "runMiddlewareChain",
           "kind": "value"
+        },
+        {
+          "name": "StaticDispatchCompileOptions",
+          "kind": "type"
+        },
+        {
+          "name": "StaticDispatchTable",
+          "kind": "type"
         },
         {
           "name": "StaticRouteExecutionContext",
@@ -3219,6 +3287,14 @@
           "kind": "type"
         },
         {
+          "name": "CronLockHandle",
+          "kind": "type"
+        },
+        {
+          "name": "CronLockStore",
+          "kind": "type"
+        },
+        {
           "name": "CronModule",
           "kind": "value"
         },
@@ -3288,6 +3364,10 @@
         },
         {
           "name": "type CronModuleSyncOptions",
+          "kind": "value"
+        },
+        {
+          "name": "type CronSchedulerLockOptions",
           "kind": "value"
         },
         {
@@ -3700,6 +3780,10 @@
       "name": "@aponiajs/http",
       "exports": [
         {
+          "name": "BulkheadLimiter",
+          "kind": "value"
+        },
+        {
           "name": "getHttpClientToken",
           "kind": "value"
         },
@@ -3792,11 +3876,27 @@
           "kind": "value"
         },
         {
+          "name": "OriginCircuitBreaker",
+          "kind": "value"
+        },
+        {
           "name": "ResolvedHttpOptions",
           "kind": "type"
         },
         {
           "name": "ROOT_INTERCEPTORS",
+          "kind": "value"
+        },
+        {
+          "name": "type BulkheadOptions",
+          "kind": "value"
+        },
+        {
+          "name": "type CircuitBreakerOptions",
+          "kind": "value"
+        },
+        {
+          "name": "type CircuitState",
           "kind": "value"
         },
         {
@@ -3821,6 +3921,79 @@
         },
         {
           "name": "type HttpClientRootOptions",
+          "kind": "value"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/idempotency",
+      "exports": [
+        {
+          "name": "ASYNC_OPTIONS_TYPE",
+          "kind": "value"
+        },
+        {
+          "name": "ConfigurableModuleClass",
+          "kind": "value"
+        },
+        {
+          "name": "IDEMPOTENCY_OPTIONS",
+          "kind": "value"
+        },
+        {
+          "name": "IDEMPOTENCY_STORE",
+          "kind": "value"
+        },
+        {
+          "name": "IdempotencyAcquireResult",
+          "kind": "type"
+        },
+        {
+          "name": "IdempotencyModule",
+          "kind": "value"
+        },
+        {
+          "name": "IdempotencyModuleAsyncOptions",
+          "kind": "type"
+        },
+        {
+          "name": "IdempotencyModuleOptions",
+          "kind": "type"
+        },
+        {
+          "name": "IdempotencyRecord",
+          "kind": "type"
+        },
+        {
+          "name": "IdempotencyStore",
+          "kind": "type"
+        },
+        {
+          "name": "MemoryIdempotencyStore",
+          "kind": "value"
+        },
+        {
+          "name": "MODULE_OPTIONS_TOKEN",
+          "kind": "value"
+        },
+        {
+          "name": "OPTIONS_TYPE",
+          "kind": "value"
+        },
+        {
+          "name": "ResolvedIdempotencyOptions",
+          "kind": "type"
+        },
+        {
+          "name": "type IdempotencyModuleExtras",
+          "kind": "value"
+        },
+        {
+          "name": "type IdempotencyModuleRegistrationAsyncOptions",
+          "kind": "value"
+        },
+        {
+          "name": "type IdempotencyModuleSyncOptions",
           "kind": "value"
         }
       ]
@@ -3959,6 +4132,95 @@
         },
         {
           "name": "Tool",
+          "kind": "value"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/metrics",
+      "exports": [
+        {
+          "name": "ASYNC_OPTIONS_TYPE",
+          "kind": "value"
+        },
+        {
+          "name": "ConfigurableModuleClass",
+          "kind": "value"
+        },
+        {
+          "name": "CounterMetric",
+          "kind": "type"
+        },
+        {
+          "name": "DEFAULT_HTTP_BUCKETS",
+          "kind": "value"
+        },
+        {
+          "name": "GaugeMetric",
+          "kind": "type"
+        },
+        {
+          "name": "HistogramDefinitionOptions",
+          "kind": "type"
+        },
+        {
+          "name": "HistogramMetric",
+          "kind": "type"
+        },
+        {
+          "name": "MetricDefinitionOptions",
+          "kind": "type"
+        },
+        {
+          "name": "MetricLabels",
+          "kind": "type"
+        },
+        {
+          "name": "METRICS_OPTIONS",
+          "kind": "value"
+        },
+        {
+          "name": "MetricsModule",
+          "kind": "value"
+        },
+        {
+          "name": "MetricsModuleAsyncOptions",
+          "kind": "type"
+        },
+        {
+          "name": "MetricsModuleOptions",
+          "kind": "type"
+        },
+        {
+          "name": "MetricsService",
+          "kind": "value"
+        },
+        {
+          "name": "MODULE_OPTIONS_TOKEN",
+          "kind": "value"
+        },
+        {
+          "name": "OPTIONS_TYPE",
+          "kind": "value"
+        },
+        {
+          "name": "PROMETHEUS_CONTENT_TYPE",
+          "kind": "value"
+        },
+        {
+          "name": "ResolvedMetricsOptions",
+          "kind": "type"
+        },
+        {
+          "name": "type MetricsModuleExtras",
+          "kind": "value"
+        },
+        {
+          "name": "type MetricsModuleRegistrationAsyncOptions",
+          "kind": "value"
+        },
+        {
+          "name": "type MetricsModuleSyncOptions",
           "kind": "value"
         }
       ]
@@ -4211,6 +4473,71 @@
         {
           "name": "OpenApiModuleOptions",
           "kind": "type"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/opentelemetry",
+      "exports": [
+        {
+          "name": "ActiveSpan",
+          "kind": "type"
+        },
+        {
+          "name": "ASYNC_OPTIONS_TYPE",
+          "kind": "value"
+        },
+        {
+          "name": "ConfigurableModuleClass",
+          "kind": "value"
+        },
+        {
+          "name": "MODULE_OPTIONS_TOKEN",
+          "kind": "value"
+        },
+        {
+          "name": "OPENTELEMETRY_OPTIONS",
+          "kind": "value"
+        },
+        {
+          "name": "OpenTelemetryModule",
+          "kind": "value"
+        },
+        {
+          "name": "OpenTelemetryModuleAsyncOptions",
+          "kind": "type"
+        },
+        {
+          "name": "OpenTelemetryModuleOptions",
+          "kind": "type"
+        },
+        {
+          "name": "OpenTelemetryService",
+          "kind": "value"
+        },
+        {
+          "name": "OPTIONS_TYPE",
+          "kind": "value"
+        },
+        {
+          "name": "ResolvedOpenTelemetryOptions",
+          "kind": "type"
+        },
+        {
+          "name": "SpanAttributes",
+          "kind": "type"
+        },
+        {
+          "name": "type OpenTelemetryModuleExtras",
+          "kind": "value"
+        },
+        {
+          "name": "type OpenTelemetryModuleRegistrationAsyncOptions",
+          "kind": "value"
+        },
+        {
+          "name": "type OpenTelemetryModuleSyncOptions",
+          "kind": "value"
         }
       ]
     },
@@ -5011,6 +5338,127 @@
         },
         {
           "name": "type RateLimitModuleSyncOptions",
+          "kind": "value"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/redis",
+      "exports": [
+        {
+          "name": "ASYNC_OPTIONS_TYPE",
+          "kind": "value"
+        },
+        {
+          "name": "ConfigurableModuleClass",
+          "kind": "value"
+        },
+        {
+          "name": "MODULE_OPTIONS_TOKEN",
+          "kind": "value"
+        },
+        {
+          "name": "OPTIONS_TYPE",
+          "kind": "value"
+        },
+        {
+          "name": "REDIS_CLIENT",
+          "kind": "value"
+        },
+        {
+          "name": "REDIS_OPTIONS",
+          "kind": "value"
+        },
+        {
+          "name": "RedisCacheStore",
+          "kind": "value"
+        },
+        {
+          "name": "RedisClientLike",
+          "kind": "type"
+        },
+        {
+          "name": "RedisCronLockStore",
+          "kind": "value"
+        },
+        {
+          "name": "RedisIdempotencyStore",
+          "kind": "value"
+        },
+        {
+          "name": "RedisModule",
+          "kind": "value"
+        },
+        {
+          "name": "RedisModuleAsyncOptions",
+          "kind": "type"
+        },
+        {
+          "name": "RedisModuleOptions",
+          "kind": "type"
+        },
+        {
+          "name": "RedisRateLimitStore",
+          "kind": "value"
+        },
+        {
+          "name": "RedisRefreshTokenStore",
+          "kind": "value"
+        },
+        {
+          "name": "RedisRevocationStore",
+          "kind": "value"
+        },
+        {
+          "name": "RedisService",
+          "kind": "value"
+        },
+        {
+          "name": "RedisSessionStore",
+          "kind": "value"
+        },
+        {
+          "name": "RedisSetOptions",
+          "kind": "type"
+        },
+        {
+          "name": "ResolvedRedisOptions",
+          "kind": "type"
+        },
+        {
+          "name": "type RedisCronLockHandle",
+          "kind": "value"
+        },
+        {
+          "name": "type RedisIdempotencyAcquireResult",
+          "kind": "value"
+        },
+        {
+          "name": "type RedisIdempotencyRecord",
+          "kind": "value"
+        },
+        {
+          "name": "type RedisModuleExtras",
+          "kind": "value"
+        },
+        {
+          "name": "type RedisModuleRegistrationAsyncOptions",
+          "kind": "value"
+        },
+        {
+          "name": "type RedisModuleSyncOptions",
+          "kind": "value"
+        },
+        {
+          "name": "type RedisRefreshTokenConsumeResult",
+          "kind": "value"
+        },
+        {
+          "name": "type RedisRefreshTokenRecord",
+          "kind": "value"
+        },
+        {
+          "name": "type RedisSessionRecord",
           "kind": "value"
         }
       ]

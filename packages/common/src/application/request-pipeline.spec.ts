@@ -5,6 +5,7 @@ import {
   provideRequestLifecycleHooks,
   runRequestHooks,
 } from "../kernel/request-hooks.ts";
+import { resolveApplicationHttpPolicies } from "../policy/http.policy.ts";
 import { createBootDiagnosticsRef, readBootDiagnostics } from "./boot-diagnostics.ts";
 import { createRequestPipeline } from "./request-pipeline.ts";
 
@@ -104,5 +105,36 @@ describe("request lifecycle hooks", () => {
 
     expect(() => provideRequestLifecycleHooks({ name: "  " })).toThrow(TypeError);
     expect(() => provideRequestLifecycleHooks({ name: "empty" })).toThrow(TypeError);
+  });
+
+  test("covers sync header-only fast-path and pre-compiled wrap chain with preflight", async () => {
+    const syncPipe = createRequestPipeline({
+      policies: resolveApplicationHttpPolicies({ securityHeaders: true }),
+      negotiator: (req) => (req.url.endsWith("/bad") ? new Response("bad", { status: 406 }) : req),
+    })!;
+
+    const badRes = await syncPipe(new Request("http://localhost/bad"), () => new Response("ok"));
+    expect(badRes.status).toBe(406);
+    expect(badRes.headers.get("x-content-type-options")).toBe("nosniff");
+
+    const okRes = await syncPipe(new Request("http://localhost/ok"), () => new Response("ok"));
+    expect(okRes.status).toBe(200);
+    expect(okRes.headers.get("x-content-type-options")).toBe("nosniff");
+
+    const wrappedPipe = createRequestPipeline({
+      policies: resolveApplicationHttpPolicies({ cors: true }),
+      hooks: [
+        { name: "wrap", wrap: (req, next) => next(req) },
+        { name: "observer", onRequest: () => undefined },
+      ],
+    })!;
+    const preflight = await wrappedPipe(
+      new Request("http://localhost/", {
+        method: "OPTIONS",
+        headers: { origin: "https://app.test", "access-control-request-method": "GET" },
+      }),
+      () => new Response("never"),
+    );
+    expect(preflight.status).toBe(204);
   });
 });

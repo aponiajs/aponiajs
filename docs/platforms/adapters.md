@@ -177,6 +177,17 @@ every platform; `WsResponse` selects another event, `undefined` sends nothing, a
 a failure is an `exception` frame with no stack or cause. The wire format is the
 adapter's: a frame is `{ event, data }` JSON.
 
+## Static Fast-Dispatch (`fastDispatch`)
+
+All three platforms (`@aponiajs/platform-elysia`, `@aponiajs/platform-hono`, and
+`@aponiajs/platform-h3`) enable `O(1)` static fast-dispatch by default
+(`fastDispatch: true`) when an application has no interfering middleware, HTTP
+policies, request hooks, versioning, request context, static assets, native
+plugins, or global pipes. Eligible zero-argument static routes bypass router
+overhead on `handle()`, and on Hono and H3 also register on `Bun.serve({ routes })`
+for `listen()`. Set `fastDispatch: false` in `AponiaFactory.create` options to
+opt out and route every request through the underlying runtime router.
+
 ## Boundaries
 
 A delivery adapter translates delivery only. It does not add a second dependency

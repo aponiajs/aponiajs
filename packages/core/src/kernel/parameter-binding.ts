@@ -1,5 +1,9 @@
-import type { RouteParameterKind, RouteParameterMetadata } from "@aponiajs/common";
-import { executePipes, resolvePipe } from "../pipes/pipe.resolver.ts";
+import type {
+  ArgumentMetadata,
+  RouteParameterKind,
+  RouteParameterMetadata,
+} from "@aponiajs/common";
+import { executePipesSyncOrAsync, resolvePipe } from "../pipes/pipe.resolver.ts";
 import type { ResolvedPipe } from "@aponiajs/common";
 import type { PlatformRouteContext } from "@aponiajs/common";
 
@@ -12,6 +16,69 @@ const pipedKinds: ReadonlySet<RouteParameterKind> = new Set([
   "cookie",
   "custom",
 ]);
+
+/** A single pre-compiled parameter step with resolved pipes and metadata. */
+export interface CompiledParameterStep {
+  readonly parameter: RouteParameterMetadata;
+  readonly pipes: readonly ResolvedPipe[];
+  readonly metadata: ArgumentMetadata;
+}
+
+/** A boot-compiled argument extraction plan for one route handler. */
+export interface CompiledArgumentPlan {
+  readonly mode: "none" | "whole-context" | "parameters";
+  readonly argumentCount: number;
+  readonly steps: readonly CompiledParameterStep[];
+}
+
+function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
+  return (
+    value !== null &&
+    (typeof value === "object" || typeof value === "function") &&
+    typeof (value as { then?: unknown }).then === "function"
+  );
+}
+
+/**
+ * Compiles parameter extraction and pipe resolution once at boot.
+ *
+ * @internal
+ */
+export function compileParameterPlan(
+  parameters: readonly RouteParameterMetadata[],
+  routePipes: readonly ResolvedPipe[],
+  globalPipes: readonly ResolvedPipe[],
+  declaredParameterCount: number | undefined,
+  handlerLength: number,
+): CompiledArgumentPlan {
+  if (parameters.length === 0) {
+    return {
+      mode: (declaredParameterCount ?? 0) > 0 || handlerLength > 0 ? "whole-context" : "none",
+      argumentCount: (declaredParameterCount ?? 0) > 0 || handlerLength > 0 ? 1 : 0,
+      steps: [],
+    };
+  }
+
+  const argumentCount = (parameters.at(-1)?.index ?? -1) + 1;
+  const steps: CompiledParameterStep[] = parameters.map((parameter) => {
+    const sharedPipes = pipedKinds.has(parameter.kind) ? [...globalPipes, ...routePipes] : [];
+    const parameterPipes = (parameter.pipes ?? []).map((pipe) => resolvePipe(pipe));
+    return {
+      parameter,
+      pipes: Object.freeze([...sharedPipes, ...parameterPipes]),
+      metadata: Object.freeze({
+        type: parameter.kind === "custom" ? "custom" : parameterKindToArgument(parameter.kind),
+        data: parameter.property,
+      }),
+    };
+  });
+
+  return {
+    mode: "parameters",
+    argumentCount,
+    steps: Object.freeze(steps),
+  };
+}
 
 /**
  * Reads what one parameter decorator asked for.
@@ -60,7 +127,7 @@ function readSource(context: PlatformRouteContext, kind: RouteParameterKind): un
     case "ip":
       return context.server?.requestIP?.()?.address;
     case "host":
-      return new URL(context.request.url).host;
+      return context.host;
     default:
       return context[kind as "body" | "query" | "params" | "headers" | "cookie"];
   }
@@ -82,6 +149,62 @@ function readSource(context: PlatformRouteContext, kind: RouteParameterKind): un
  * @param globalPipes - The application's resolved pipes.
  * @returns The arguments to call the handler with.
  */
+/**
+ * Evaluates a pre-compiled argument plan synchronously when all pipes are
+ * synchronous, returning a Promise only when a pipe returns one.
+ *
+ * @internal
+ */
+export function buildCompiledArguments(
+  plan: CompiledArgumentPlan,
+  context: PlatformRouteContext,
+): unknown[] | Promise<unknown[]> {
+  if (plan.mode === "none") {
+    return [];
+  }
+  if (plan.mode === "whole-context") {
+    return [context];
+  }
+
+  const { steps, argumentCount } = plan;
+  const args = Array.from<unknown>({ length: argumentCount });
+
+  for (let i = 0; i < steps.length; i += 1) {
+    const step = steps[i]!;
+    const raw = readParameterValue(context, step.parameter);
+    const value =
+      step.pipes.length > 0 ? executePipesSyncOrAsync(step.pipes, raw, step.metadata) : raw;
+    if (isPromiseLike(value)) {
+      return finishCompiledArgumentsAsync(plan, context, args, i, value);
+    }
+    args[step.parameter.index] = value;
+  }
+
+  return args;
+}
+
+async function finishCompiledArgumentsAsync(
+  plan: CompiledArgumentPlan,
+  context: PlatformRouteContext,
+  args: unknown[],
+  pendingIndex: number,
+  pendingValue: PromiseLike<unknown>,
+): Promise<unknown[]> {
+  const { steps } = plan;
+  args[steps[pendingIndex]!.parameter.index] = await pendingValue;
+  for (let i = pendingIndex + 1; i < steps.length; i += 1) {
+    const step = steps[i]!;
+    const raw = readParameterValue(context, step.parameter);
+    const value =
+      step.pipes.length > 0 ? executePipesSyncOrAsync(step.pipes, raw, step.metadata) : raw;
+    args[step.parameter.index] = isPromiseLike(value) ? await value : value;
+  }
+  return args;
+}
+
+/**
+ * Builds the runtime argument array for a route handler from the request context.
+ */
 export async function buildArguments(
   parameters: readonly RouteParameterMetadata[],
   context: PlatformRouteContext,
@@ -90,31 +213,14 @@ export async function buildArguments(
   routePipes: readonly ResolvedPipe[],
   globalPipes: readonly ResolvedPipe[],
 ): Promise<unknown[]> {
-  if (parameters.length === 0) {
-    if ((declaredParameterCount ?? 0) > 0 || handlerLength > 0) {
-      return [context];
-    }
-    return [];
-  }
-
-  const argumentCount = (parameters.at(-1)?.index ?? -1) + 1;
-  const args = Array.from<unknown>({ length: argumentCount });
-
-  for (const parameter of parameters) {
-    let value = readParameterValue(context, parameter);
-    const sharedPipes = pipedKinds.has(parameter.kind) ? [...globalPipes, ...routePipes] : [];
-    const parameterPipes = (parameter.pipes ?? []).map((pipe) => resolvePipe(pipe));
-    const pipes = [...sharedPipes, ...parameterPipes];
-    if (pipes.length > 0) {
-      value = await executePipes(pipes, value, {
-        type: parameter.kind === "custom" ? "custom" : parameterKindToArgument(parameter.kind),
-        data: parameter.property,
-      });
-    }
-    args[parameter.index] = value;
-  }
-
-  return args;
+  const plan = compileParameterPlan(
+    parameters,
+    routePipes,
+    globalPipes,
+    declaredParameterCount,
+    handlerLength,
+  );
+  return await buildCompiledArguments(plan, context);
 }
 
 function parameterKindToArgument(

@@ -99,6 +99,10 @@ jobs:
           bun pm pack --cwd packages/mapped-types --destination "$GITHUB_WORKSPACE/canary-artifacts/40-mapped-types"
           bun pm pack --cwd packages/serve-static --destination "$GITHUB_WORKSPACE/canary-artifacts/41-serve-static"
           bun pm pack --cwd packages/terminus --destination "$GITHUB_WORKSPACE/canary-artifacts/42-terminus"
+          bun pm pack --cwd packages/metrics --destination "$GITHUB_WORKSPACE/canary-artifacts/43-metrics"
+          bun pm pack --cwd packages/opentelemetry --destination "$GITHUB_WORKSPACE/canary-artifacts/44-opentelemetry"
+          bun pm pack --cwd packages/idempotency --destination "$GITHUB_WORKSPACE/canary-artifacts/45-idempotency"
+          bun pm pack --cwd packages/redis --destination "$GITHUB_WORKSPACE/canary-artifacts/46-redis"
 
       - name: Publish packages in dependency order
         working-directory: ${{ runner.temp }}

@@ -165,20 +165,79 @@ export async function readBody(
   return undefined;
 }
 
+const sharedTextDecoder = new TextDecoder();
+const sharedTextEncoder = new TextEncoder();
+const EMPTY_BYTES = new Uint8Array(0);
+
+/**
+ * Extracts the pathname from a request URL without constructing a `URL` instance
+ * for ordinary ASCII paths.
+ *
+ * @internal
+ */
+export function slicePathname(url: string): string {
+  const schemeEnd = url.indexOf("://");
+  const pathStart = schemeEnd >= 0 ? url.indexOf("/", schemeEnd + 3) : 0;
+  if (pathStart < 0) {
+    return "/";
+  }
+  const queryStart = url.indexOf("?", pathStart);
+  const path = queryStart < 0 ? url.slice(pathStart) : url.slice(pathStart, queryStart);
+  return path.length === 0 ? "/" : path;
+}
+
 async function readText(request: Request, maxBodyBytes: number): Promise<string> {
+  const rawLength = request.headers.get("content-length");
+  const transferEncoding = request.headers.get("transfer-encoding");
+  if (
+    rawLength !== null &&
+    (transferEncoding === null || !transferEncoding.toLowerCase().includes("chunked"))
+  ) {
+    const declared = Number(rawLength);
+    if (Number.isFinite(declared) && declared >= 0 && declared <= maxBodyBytes) {
+      const text = await request.text();
+      if (
+        text.length * 3 > maxBodyBytes &&
+        sharedTextEncoder.encode(text).byteLength > maxBodyBytes
+      ) {
+        throw payloadTooLarge(maxBodyBytes);
+      }
+      return text;
+    }
+  }
   const bytes = await readBoundedBytes(request, maxBodyBytes);
-  return new TextDecoder().decode(bytes);
+  return sharedTextDecoder.decode(bytes);
 }
 
 async function readBoundedBytes(request: Request, maxBodyBytes: number): Promise<Uint8Array> {
   if (request.body === null) {
-    return new Uint8Array();
+    return EMPTY_BYTES;
   }
 
   const reader = request.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let total = 0;
   try {
+    const first = await reader.read();
+    if (first.done) {
+      return EMPTY_BYTES;
+    }
+    const firstChunk = first.value;
+    if (firstChunk.byteLength > maxBodyBytes) {
+      await reader.cancel();
+      throw payloadTooLarge(maxBodyBytes);
+    }
+
+    const second = await reader.read();
+    if (second.done) {
+      return firstChunk;
+    }
+
+    let total = firstChunk.byteLength + second.value.byteLength;
+    if (total > maxBodyBytes) {
+      await reader.cancel();
+      throw payloadTooLarge(maxBodyBytes);
+    }
+
+    const chunks: Uint8Array[] = [firstChunk, second.value];
     for (;;) {
       const { done, value } = await reader.read();
       if (done) {
@@ -191,17 +250,17 @@ async function readBoundedBytes(request: Request, maxBodyBytes: number): Promise
       }
       chunks.push(value);
     }
+
+    const bytes = new Uint8Array(total);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    return bytes;
   } finally {
     reader.releaseLock();
   }
-
-  const bytes = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    bytes.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return bytes;
 }
 
 function payloadTooLarge(maxBodyBytes: number): HttpError {
